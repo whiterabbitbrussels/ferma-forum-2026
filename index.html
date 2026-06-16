@@ -810,7 +810,7 @@
         const status = statusOf(t.status);
         const progressPercent = t.budgetHours > 0 ? Math.round((t.invoicedHours / t.budgetHours) * 100) : 0;
 
-        html += '<tr>' +
+        html += '<tr data-task-id="' + t.id + '">' +
           '<td><span class="task-name">' + t.name + '</span></td>' +
           '<td>' +
           '<div class="hours-cell">' +
@@ -832,9 +832,46 @@
           (t.amountRemaining > 0 ? '<div><span class="amount-remaining">Estimated: €' + t.amountRemaining.toLocaleString('it-IT') + '</span></div>' : '') +
           '</td>' +
           '<td><span class="status-badge ' + t.status + '">' + status.emoji + ' ' + status.label.split(' ')[1] + '</span></td>' +
-          '<td><span style="font-size: 11px; color: var(--muted);">' + (t.ferma || '') + '</span></td>' +
+          '<td><span class="ferma-cell" data-task-id="' + t.id + '" style="font-size: 11px; color: var(--muted); cursor: pointer; padding: 4px 8px; border-radius: 4px; display: inline-block; min-width: 160px;" title="Doppio click per modificare">' + (t.ferma || '') + '</span></td>' +
           '</tr>';
       });
+
+      // Attach edit handlers after rendering
+      setTimeout(() => {
+        document.querySelectorAll('.ferma-cell').forEach(cell => {
+          cell.addEventListener('dblclick', function() {
+            const taskId = parseInt(this.dataset.taskId);
+            const task = tasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const currentValue = task.ferma || '';
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentValue;
+            input.style.cssText = 'width: 100%; padding: 4px 8px; background: var(--panel); border: 1px solid var(--orange); color: var(--text); border-radius: 4px; font-size: 11px;';
+
+            const saveEdit = () => {
+              task.ferma = input.value;
+              this.textContent = task.ferma || '';
+              this.replaceWith(cell);
+              setTimeout(() => {
+                document.querySelectorAll('.ferma-cell').forEach(c => {
+                  c.addEventListener('dblclick', arguments.callee);
+                });
+              }, 0);
+            };
+
+            input.addEventListener('blur', saveEdit);
+            input.addEventListener('keypress', (e) => {
+              if (e.key === 'Enter') saveEdit();
+            });
+
+            this.replaceWith(input);
+            input.focus();
+            input.select();
+          });
+        });
+      }, 0);
 
       html += '</tbody></table></div>';
       return html;
