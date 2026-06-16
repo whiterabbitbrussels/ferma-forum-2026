@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FERMA Forum 2026 — Project Dashboard</title>
+  <style>
+    :root {
+      --bg: #0f0e0d;
+      --panel: #171513;
+      --panel-2: #211e1b;
+      --card: #1f1c19;
+      --line: #332e29;
+      --text: #f4efe9;
+      --muted: #9a918a;
+      --orange: #ff6a13;
+      --orange-soft: #ff8a44;
+      --c-paid: #22c55e;
+      --c-pending: #f59e0b;
+      --c-not-started: #ef4444;
+      --c-over: #ec4899;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      min-height: 100%;
+    }
+
+    a {
+      color: var(--orange-soft);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      width: 268px;
+      flex: none;
+      background: var(--panel);
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow-y: auto;
+    }
+
+    .side-head {
+      padding: 22px 20px 18px;
+      border-bottom: 1px solid var(--line);
+      flex: none;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--orange);
+      box-shadow: 0 0 12px var(--orange);
+    }
+
+    .brand h1 {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .side-head .sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    nav {
+      padding: 14px 12px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      letter-spacing: 0.9px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 14px 10px 7px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 10px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text);
+      user-select: none;
+      transition: 0.13s;
+      border: 1px solid transparent;
+    }
+
+    .nav-item:hover {
+      background: var(--panel-2);
+    }
+
+    .nav-item.on {
+      background: var(--panel-2);
+      border-color: var(--line);
+    }
+
+    .nav-item.on .nav-name {
+      font-weight: 650;
+    }
+
+    .nav-ico {
+      width: 20px;
+      text-align: center;
+      flex: none;
+      font-size: 13px;
+    }
+
+    .nav-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-count {
+      font-size: 11px;
+      color: var(--muted);
+      background: var(--bg);
+      padding: 2px 8px;
+      border-radius: 20px;
+      flex: none;
+    }
+
+    .legend {
+      padding: 13px 18px 15px;
+      border-top: 1px solid var(--line);
+      flex: none;
+    }
+
+    .legend-title {
+      font-size: 10px;
+      letter-spacing: 0.9px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 9px;
+    }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-size: 11.5px;
+      margin: 6px 0;
+    }
+
+    .legend-sw {
+      width: 12px;
+      height: 12px;
+      border-radius: 4px;
+      flex: none;
+    }
+
+    /* ===== MAIN ===== */
+    main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .topbar {
+      padding: 20px 30px 16px;
+      border-bottom: 1px solid var(--line);
+      flex: none;
+      background: linear-gradient(180deg, #161412, #0f0e0d);
+    }
+
+    .crumb {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+    }
+
+    .view-title {
+      font-size: 21px;
+      font-weight: 700;
+      margin: 5px 0 3px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .view-bar {
+      width: 30px;
+      height: 5px;
+      border-radius: 3px;
+    }
+
+    .view-desc {
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+
+    #search {
+      margin-top: 13px;
+      width: 100%;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      color: var(--text);
+      padding: 9px 13px;
+      border-radius: 9px;
+      font-size: 13.5px;
+    }
+
+    #search:focus {
+      outline: none;
+      border-color: var(--orange);
+    }
+
+    .scroll {
+      overflow-y: auto;
+      padding: 22px 30px 70px;
+      flex: 1;
+    }
+
+    /* ===== STATS ===== */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+
+    .stat-box {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--orange-soft);
+      line-height: 1;
+    }
+
+    .stat-desc {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .progress-bar {
+      background: var(--panel);
+      height: 6px;
+      border-radius: 3px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--orange) 0%, var(--orange-soft) 100%);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    /* ===== TABLE ===== */
+    .table-wrap {
+      overflow-x: auto;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      margin-bottom: 30px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead {
+      background: var(--panel-2);
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 10px;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--line);
+      transition: 0.13s;
+    }
+
+    tbody tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    td {
+      padding: 14px 16px;
+      vertical-align: middle;
+    }
+
+    .task-name {
+      font-weight: 500;
+      color: var(--text);
+      max-width: 280px;
+    }
+
+    .hours-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .hours-numbers {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      font-size: 12px;
+    }
+
+    .hours-budget {
+      color: var(--muted);
+    }
+
+    .hours-invoiced {
+      color: var(--orange-soft);
+      font-weight: 600;
+    }
+
+    .hours-remaining {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .hours-remaining.over {
+      color: var(--c-over);
+      font-weight: 600;
+    }
+
+    .hours-progress {
+      width: 120px;
+      height: 24px;
+      background: var(--panel);
+      border-radius: 6px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid var(--line);
+    }
+
+    .hours-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--orange) 0%, var(--orange-soft) 100%);
+      transition: width 0.3s ease;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      transition: 0.13s;
+      border: 1px solid;
+      white-space: nowrap;
+    }
+
+    .status-badge.paid {
+      background: rgba(34, 197, 94, 0.1);
+      color: var(--c-paid);
+      border-color: #1d3d27;
+    }
+
+    .status-badge.paid:hover {
+      background: rgba(34, 197, 94, 0.2);
+    }
+
+    .status-badge.pending {
+      background: rgba(245, 158, 11, 0.1);
+      color: var(--c-pending);
+      border-color: #3d2d1a;
+    }
+
+    .status-badge.pending:hover {
+      background: rgba(245, 158, 11, 0.2);
+    }
+
+    .status-badge.not-started {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--c-not-started);
+      border-color: #3d1d1d;
+    }
+
+    .status-badge.not-started:hover {
+      background: rgba(239, 68, 68, 0.2);
+    }
+
+    .status-badge.over {
+      background: rgba(236, 72, 153, 0.1);
+      color: var(--c-over);
+      border-color: #3d1d2d;
+    }
+
+    .status-badge.over:hover {
+      background: rgba(236, 72, 153, 0.2);
+    }
+
+    .amount-invoiced {
+      font-weight: 600;
+      color: var(--orange-soft);
+    }
+
+    .amount-remaining {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--orange);
+      color: #1a0d04;
+      padding: 11px 22px;
+      border-radius: 9px;
+      font-weight: 600;
+      font-size: 13px;
+      opacity: 0;
+      transition: 0.25s;
+      pointer-events: none;
+      z-index: 9;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+
+    @media (max-width: 780px) {
+      body {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+      }
+
+      nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      main {
+        height: auto;
+      }
+
+      .scroll {
+        overflow: visible;
+      }
+
+      th, td {
+        padding: 10px 8px;
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <div class="side-head">
+      <div class="brand">
+        <span class="dot"></span>
+        <h1>FERMA Forum 2026</h1>
+      </div>
+      <div class="sub">White Rabbit Brussels · Status Report</div>
+    </div>
+    <nav id="nav"></nav>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <main>
+    <div class="topbar">
+      <div class="crumb" id="crumb">Project Status</div>
+      <div class="view-title" id="viewTitle"><span class="view-bar" style="background: var(--orange)"></span>Forum 2026</div>
+      <div class="view-desc">Ore, budget e pagamenti — clicca sullo status per aggiornare</div>
+      <input id="search" type="text" placeholder="Cerca per nome task…">
+    </div>
+
+    <div class="scroll" id="content"></div>
+  </main>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STATUSES = [
+      { key: "paid", label: "✅ Paid", color: "#22c55e", emoji: "✅" },
+      { key: "pending", label: "🟡 Pending to Paid", color: "#f59e0b", emoji: "🟡" },
+      { key: "not-started", label: "⏳ Not Started", color: "#ef4444", emoji: "⏳" },
+      { key: "over", label: "⚠️ Over Budget", color: "#ec4899", emoji: "⚠️" }
+    ];
+
+    const TASKS = [
+      {
+        id: 1,
+        name: "Creative Universe Concept",
+        budgetHours: 20,
+        invoicedHours: 20,
+        remainingHours: 0,
+        hourlyRate: 150.00,
+        amountInvoiced: 3000.00,
+        amountRemaining: 0.00,
+        status: "paid",
+        reference: "WR0184"
+      },
+      {
+        id: 2,
+        name: "Logo Design & Rationale",
+        budgetHours: 24,
+        invoicedHours: 24,
+        remainingHours: 0,
+        hourlyRate: 85.00,
+        amountInvoiced: 2040.00,
+        amountRemaining: 0.00,
+        status: "paid",
+        reference: "WR0184"
+      },
+      {
+        id: 3,
+        name: "Web, LinkedIn and Twitter Banners",
+        budgetHours: 4,
+        invoicedHours: 4,
+        remainingHours: 0,
+        hourlyRate: 85.00,
+        amountInvoiced: 340.00,
+        amountRemaining: 0.00,
+        status: "paid",
+        reference: "WR0184"
+      },
+      {
+        id: 4,
+        name: "Design for Onsite Master Materials",
+        budgetHours: 32,
+        invoicedHours: 7,
+        remainingHours: 25,
+        hourlyRate: 85.00,
+        amountInvoiced: 595.00,
+        amountRemaining: 2125.00,
+        status: "pending",
+        reference: "WR195"
+      },
+      {
+        id: 5,
+        name: "PPT Template",
+        budgetHours: 6,
+        invoicedHours: 4,
+        remainingHours: 2,
+        hourlyRate: 85.00,
+        amountInvoiced: 340.00,
+        amountRemaining: 170.00,
+        status: "paid",
+        reference: "WR0184"
+      },
+      {
+        id: 6,
+        name: "Leaflet",
+        budgetHours: 8,
+        invoicedHours: 0,
+        remainingHours: 8,
+        hourlyRate: 85.00,
+        amountInvoiced: 0.00,
+        amountRemaining: 680.00,
+        status: "not-started",
+        reference: ""
+      },
+      {
+        id: 7,
+        name: "Save the Date Flyer",
+        budgetHours: 4,
+        invoicedHours: 0,
+        remainingHours: 4,
+        hourlyRate: 85.00,
+        amountInvoiced: 0.00,
+        amountRemaining: 340.00,
+        status: "not-started",
+        reference: ""
+      },
+      {
+        id: 8,
+        name: "Animation for Video Idents",
+        budgetHours: 16,
+        invoicedHours: 21,
+        remainingHours: -5,
+        hourlyRate: 90.00,
+        amountInvoiced: 1890.00,
+        amountRemaining: 450.00,
+        status: "paid",
+        reference: "WR0194"
+      },
+      {
+        id: 9,
+        name: "Project Management",
+        budgetHours: 44,
+        invoicedHours: 19,
+        remainingHours: 25,
+        hourlyRate: 85.00,
+        amountInvoiced: 1615.00,
+        amountRemaining: 2125.00,
+        status: "pending",
+        reference: "WR195"
+      }
+    ];
+
+    let tasks = [...TASKS];
+    let view = "all";
+    let term = "";
+
+    const $ = s => document.querySelector(s);
+    const statusOf = k => STATUSES.find(s => s.key === k);
+
+    function toast(m) {
+      const t = $("#toast");
+      t.textContent = m;
+      t.classList.add("show");
+      clearTimeout(t._t);
+      t._t = setTimeout(() => t.classList.remove("show"), 1900);
+    }
+
+    function renderNav() {
+      let h = '<div class="nav-label">Visualizza</div>' +
+        navItem("all", "▦", "Tutti i task", tasks.length);
+
+      h += '<div class="nav-label">Per Status</div>';
+      STATUSES.forEach(s => {
+        const n = tasks.filter(t => t.status === s.key).length;
+        if (n > 0) h += navItem(s.key, s.emoji, s.label, n);
+      });
+
+      const nav = $("#nav");
+      nav.innerHTML = h;
+      nav.querySelectorAll(".nav-item").forEach(it => it.onclick = () => {
+        view = it.dataset.view;
+        term = "";
+        $("#search").value = "";
+        render();
+      });
+    }
+
+    function navItem(v, ico, name, count) {
+      const on = view === v ? " on" : "";
+      return '<div class="nav-item' + on + '" data-view="' + v + '">' +
+        '<span class="nav-ico">' + ico + '</span>' +
+        '<span class="nav-name">' + name + '</span>' +
+        '<span class="nav-count">' + count + '</span></div>';
+    }
+
+    function renderLegend() {
+      let h = '<div class="legend-title">Status Legend</div>';
+      STATUSES.forEach(s => {
+        h += '<div class="legend-row"><span class="legend-sw" style="background:' + s.color + '"></span>' +
+          s.label + '</div>';
+      });
+      $("#legend").innerHTML = h;
+    }
+
+    function renderStats() {
+      const totalBudget = tasks.reduce((s, t) => s + t.budgetHours, 0);
+      const totalInvoiced = tasks.reduce((s, t) => s + t.invoicedHours, 0);
+      const totalRemaining = tasks.reduce((s, t) => s + t.remainingHours, 0);
+      const totalAmountInvoiced = tasks.reduce((s, t) => s + t.amountInvoiced, 0);
+      const totalAmountRemaining = tasks.reduce((s, t) => s + t.amountRemaining, 0);
+      const progressPercent = totalBudget > 0 ? Math.round((totalInvoiced / totalBudget) * 100) : 0;
+
+      const paid = tasks.filter(t => t.status === "paid").length;
+      const pending = tasks.filter(t => t.status === "pending").length;
+
+      return `
+        <div class="stats">
+          <div class="stat-box">
+            <div class="stat-label">Total Budget</div>
+            <div class="stat-value">${totalBudget}h</div>
+            <div class="stat-desc">Hours allocated</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Invoiced vs Budget</div>
+            <div class="stat-value">${totalInvoiced}h / ${totalBudget}h</div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: ${progressPercent}%"></div>
+            </div>
+            <div class="stat-desc">${progressPercent}% Complete</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Remaining Hours</div>
+            <div class="stat-value">${totalRemaining}h</div>
+            <div class="stat-desc">Work left to do</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Financial Status</div>
+            <div class="stat-value">€${totalAmountInvoiced.toLocaleString('it-IT')}</div>
+            <div class="stat-desc">Invoiced + €${totalAmountRemaining.toLocaleString('it-IT')} pending</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Payment Status</div>
+            <div class="stat-value">${paid} Paid</div>
+            <div class="stat-desc">${pending} Pending to Paid</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTable() {
+      const match = t => !term || t.name.toLowerCase().includes(term.toLowerCase());
+
+      let filtered = tasks.filter(match);
+      if (view !== "all") {
+        filtered = filtered.filter(t => t.status === view);
+      }
+
+      if (!filtered.length) {
+        return renderStats() + '<div class="empty">No tasks found.</div>';
+      }
+
+      let html = renderStats() + '<div class="table-wrap"><table>' +
+        '<thead><tr>' +
+        '<th style="min-width: 280px">Deliverable / Task</th>' +
+        '<th style="min-width: 200px">Hours</th>' +
+        '<th style="min-width: 120px">Hourly Rate</th>' +
+        '<th style="min-width: 200px">Amount (excl. VAT)</th>' +
+        '<th style="min-width: 140px">Status</th>' +
+        '</tr></thead><tbody>';
+
+      filtered.forEach(t => {
+        const status = statusOf(t.status);
+        const progressPercent = t.budgetHours > 0 ? Math.round((t.invoicedHours / t.budgetHours) * 100) : 0;
+
+        html += '<tr>' +
+          '<td><span class="task-name">' + t.name + '</span></td>' +
+          '<td>' +
+          '<div class="hours-cell">' +
+          '<div class="hours-numbers">' +
+          '<span class="hours-budget">' + t.invoicedHours + '/' + t.budgetHours + 'h</span>' +
+          '<span class="hours-remaining' + (t.remainingHours < 0 ? ' over' : '') + '">' +
+          (t.remainingHours >= 0 ? '✓ ' : '✗ ') + Math.abs(t.remainingHours) + 'h ' +
+          (t.remainingHours >= 0 ? 'left' : 'over') +
+          '</span>' +
+          '</div>' +
+          '<div class="hours-progress">' +
+          '<div class="hours-progress-fill" style="width: ' + Math.min(progressPercent, 100) + '%"></div>' +
+          '</div>' +
+          '</div>' +
+          '</td>' +
+          '<td>€' + t.hourlyRate.toLocaleString('it-IT') + '</td>' +
+          '<td>' +
+          '<div><span class="amount-invoiced">€' + t.amountInvoiced.toLocaleString('it-IT') + '</span></div>' +
+          (t.amountRemaining > 0 ? '<div><span class="amount-remaining">Estimated: €' + t.amountRemaining.toLocaleString('it-IT') + '</span></div>' : '') +
+          '</td>' +
+          '<td><span class="status-badge ' + t.status + '">' + status.emoji + ' ' + status.label.split(' ')[1] + '</span></td>' +
+          '</tr>';
+      });
+
+      html += '</tbody></table></div>';
+      return html;
+    }
+
+    function render() {
+      renderNav();
+      renderLegend();
+      const ct = $("#content");
+      ct.innerHTML = renderTable();
+    }
+
+    $("#search").oninput = (e) => {
+      term = e.target.value;
+      render();
+    };
+
+    render();
+  </script>
+</body>
+</html>
