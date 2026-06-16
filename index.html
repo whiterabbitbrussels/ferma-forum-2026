@@ -578,7 +578,8 @@
         amountInvoiced: 3000.00,
         amountRemaining: 0.00,
         status: "paid",
-        reference: "WR0184"
+        reference: "WR0184",
+        ferma: "PAID- WR0184- 1,000 €"
       },
       {
         id: 2,
@@ -590,7 +591,8 @@
         amountInvoiced: 2040.00,
         amountRemaining: 0.00,
         status: "paid",
-        reference: "WR0184"
+        reference: "WR0184",
+        ferma: "PAID- WR0184- 2,040 €"
       },
       {
         id: 3,
@@ -602,7 +604,8 @@
         amountInvoiced: 340.00,
         amountRemaining: 0.00,
         status: "paid",
-        reference: "WR0184"
+        reference: "WR0184",
+        ferma: "PAID"
       },
       {
         id: 4,
@@ -614,7 +617,8 @@
         amountInvoiced: 595.00,
         amountRemaining: 2125.00,
         status: "pending",
-        reference: "WR195"
+        reference: "WR195",
+        ferma: "PENDING TO PAID- WR195- 935 €"
       },
       {
         id: 5,
@@ -626,7 +630,8 @@
         amountInvoiced: 340.00,
         amountRemaining: 170.00,
         status: "paid",
-        reference: "WR0184"
+        reference: "WR0184",
+        ferma: "PAID- WR0184- 340 €"
       },
       {
         id: 6,
@@ -638,7 +643,8 @@
         amountInvoiced: 0.00,
         amountRemaining: 680.00,
         status: "not-started",
-        reference: ""
+        reference: "",
+        ferma: ""
       },
       {
         id: 7,
@@ -650,7 +656,8 @@
         amountInvoiced: 0.00,
         amountRemaining: 340.00,
         status: "not-started",
-        reference: ""
+        reference: "",
+        ferma: ""
       },
       {
         id: 8,
@@ -662,7 +669,8 @@
         amountInvoiced: 1890.00,
         amountRemaining: 450.00,
         status: "paid",
-        reference: "WR0194"
+        reference: "WR0194",
+        ferma: "PAID- WR0194- 1,890 €"
       },
       {
         id: 9,
@@ -674,7 +682,8 @@
         amountInvoiced: 1615.00,
         amountRemaining: 2125.00,
         status: "pending",
-        reference: "WR195"
+        reference: "WR195",
+        ferma: "PENDING TO PAID- WR195- 1,615 €"
       }
     ];
 
@@ -794,6 +803,7 @@
         '<th style="min-width: 120px">Hourly Rate</th>' +
         '<th style="min-width: 200px">Amount (excl. VAT)</th>' +
         '<th style="min-width: 140px">Status</th>' +
+        '<th style="min-width: 180px">FERMA</th>' +
         '</tr></thead><tbody>';
 
       filtered.forEach(t => {
@@ -822,6 +832,7 @@
           (t.amountRemaining > 0 ? '<div><span class="amount-remaining">Estimated: €' + t.amountRemaining.toLocaleString('it-IT') + '</span></div>' : '') +
           '</td>' +
           '<td><span class="status-badge ' + t.status + '">' + status.emoji + ' ' + status.label.split(' ')[1] + '</span></td>' +
+          '<td><span style="font-size: 11px; color: var(--muted);">' + (t.ferma || '') + '</span></td>' +
           '</tr>';
       });
 
