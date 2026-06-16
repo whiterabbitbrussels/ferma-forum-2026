@@ -837,7 +837,7 @@
       });
 
       // Attach edit handlers after rendering
-      setTimeout(() => {
+      function attachFermaEditors() {
         document.querySelectorAll('.ferma-cell').forEach(cell => {
           cell.addEventListener('dblclick', function() {
             const taskId = parseInt(this.dataset.taskId);
@@ -850,15 +850,12 @@
             input.value = currentValue;
             input.style.cssText = 'width: 100%; padding: 4px 8px; background: var(--panel); border: 1px solid var(--orange); color: var(--text); border-radius: 4px; font-size: 11px;';
 
+            const span = this;
             const saveEdit = () => {
               task.ferma = input.value;
-              this.textContent = task.ferma || '';
-              this.replaceWith(cell);
-              setTimeout(() => {
-                document.querySelectorAll('.ferma-cell').forEach(c => {
-                  c.addEventListener('dblclick', arguments.callee);
-                });
-              }, 0);
+              span.textContent = task.ferma || '';
+              input.replaceWith(span);
+              attachFermaEditors();
             };
 
             input.addEventListener('blur', saveEdit);
@@ -866,12 +863,13 @@
               if (e.key === 'Enter') saveEdit();
             });
 
-            this.replaceWith(input);
+            span.replaceWith(input);
             input.focus();
             input.select();
           });
         });
-      }, 0);
+      }
+      setTimeout(attachFermaEditors, 0);
 
       html += '</tbody></table></div>';
       return html;
