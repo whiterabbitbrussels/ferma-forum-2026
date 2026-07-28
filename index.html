@@ -543,7 +543,7 @@
         <span class="dot"></span>
         <h1>FERMA Forum 2026</h1>
       </div>
-      <div class="sub">White Rabbit Brussels · Status Report</div>
+      <div class="sub">White Rabbit Brussels · Production Status</div>
     </div>
     <nav id="nav"></nav>
     <div class="legend" id="legend"></div>
@@ -551,10 +551,10 @@
 
   <main>
     <div class="topbar">
-      <div class="crumb" id="crumb">Project Status</div>
+      <div class="crumb" id="crumb">Production Overview</div>
       <div class="view-title" id="viewTitle"><span class="view-bar" style="background: var(--orange)"></span>Forum 2026</div>
-      <div class="view-desc">Ore, budget e pagamenti — clicca sullo status per aggiornare</div>
-      <input id="search" type="text" placeholder="Cerca per nome task…">
+      <div class="view-desc">Hours, budget & approvals — approved deliverables + new production pending approval</div>
+      <input id="search" type="text" placeholder="Search tasks…">
     </div>
 
     <div class="scroll" id="content"></div>
@@ -583,7 +583,7 @@
         status: "paid",
         reference: "WR0184",
         ferma: "PAID- WR0184- 1,000 €",
-        category: "original"
+        section: "approved"
       },
       {
         id: 2,
@@ -597,7 +597,7 @@
         status: "paid",
         reference: "WR0184",
         ferma: "PAID- WR0184- 2,040 €",
-        category: "original"
+        section: "approved"
       },
       {
         id: 3,
@@ -611,7 +611,7 @@
         status: "paid",
         reference: "WR0184",
         ferma: "PAID",
-        category: "original"
+        section: "approved"
       },
       {
         id: 4,
@@ -625,8 +625,7 @@
         status: "pending",
         reference: "WR195",
         ferma: "PENDING TO PAID- WR195- 935 €",
-        category: "original",
-        note: "25h allocated to new onsite signage & setup"
+        section: "approved"
       },
       {
         id: 5,
@@ -640,22 +639,21 @@
         status: "paid",
         reference: "WR0184",
         ferma: "PAID- WR0184- 340 €",
-        category: "original"
+        section: "approved"
       },
       {
         id: 6,
         name: "Leaflet",
         budgetHours: 8,
         invoicedHours: 0,
-        remainingHours: 0,
+        remainingHours: 8,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
-        amountRemaining: 0.00,
+        amountRemaining: 680.00,
         status: "not-started",
         reference: "",
-        ferma: "REALLOCATED to Event Programme",
-        category: "original",
-        note: "8h reallocated to Event Programme"
+        ferma: "",
+        section: "approved"
       },
       {
         id: 7,
@@ -669,7 +667,7 @@
         status: "not-started",
         reference: "",
         ferma: "",
-        category: "original"
+        section: "approved"
       },
       {
         id: 8,
@@ -683,7 +681,7 @@
         status: "paid",
         reference: "WR0194",
         ferma: "PAID- WR0194- 1,890 €",
-        category: "original"
+        section: "approved"
       },
       {
         id: 9,
@@ -697,248 +695,231 @@
         status: "pending",
         reference: "WR195",
         ferma: "PENDING TO PAID- WR195- 1,615 €",
-        category: "original"
+        section: "approved"
       },
       {
         id: 10,
-        name: "🔶 NUOVO: Circa 20 segnaletiche a terra",
+        name: "Approx. 20 Floor Signage",
         budgetHours: 7,
         invoicedHours: 0,
         remainingHours: 7,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 595.00,
-        status: "not-started",
+        status: "pending",
         reference: "",
         ferma: "",
-        category: "new-onsite",
-        isNew: true
+        section: "new-realloc"
       },
       {
         id: 11,
-        name: "🔶 NUOVO: Vetrata personalizzata",
+        name: "Custom Glass Partition",
         budgetHours: 1.5,
         invoicedHours: 0,
         remainingHours: 1.5,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 127.50,
-        status: "not-started",
+        status: "pending",
         reference: "",
         ferma: "",
-        category: "new-onsite",
-        isNew: true
+        section: "new-realloc"
       },
       {
         id: 12,
-        name: "🔶 NUOVO: Colonne",
+        name: "Columns",
         budgetHours: 1,
         invoicedHours: 0,
         remainingHours: 1,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 85.00,
-        status: "not-started",
+        status: "pending",
         reference: "",
         ferma: "",
-        category: "new-onsite",
-        isNew: true
+        section: "new-realloc"
       },
       {
         id: 13,
-        name: "🔶 NUOVO: Pannelli porta d'ingresso",
+        name: "Entrance Doors Panels",
         budgetHours: 1.5,
         invoicedHours: 0,
         remainingHours: 1.5,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 127.50,
-        status: "not-started",
+        status: "pending",
         reference: "",
         ferma: "",
-        category: "new-onsite",
-        isNew: true
+        section: "new-realloc"
       },
       {
         id: 14,
-        name: "🔶 NUOVO: Segnaletica guardaroba",
+        name: "Cloakroom Signage",
         budgetHours: 1,
         invoicedHours: 0,
         remainingHours: 1,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 85.00,
-        status: "not-started",
+        status: "pending",
         reference: "",
         ferma: "",
-        category: "new-onsite",
-        isNew: true
+        section: "new-realloc"
       },
       {
         id: 15,
-        name: "🔶 NUOVO: Prisma sulla gabbia dell'ascensore",
+        name: "Prism on Elevator Cage",
         budgetHours: 3,
         invoicedHours: 0,
         remainingHours: 3,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 255.00,
-        status: "not-started",
+        status: "pending",
         reference: "",
         ferma: "",
-        category: "new-onsite",
-        isNew: true
+        section: "new-realloc"
       },
       {
         id: 16,
-        name: "🔶 NUOVO: Parete del primo piano",
+        name: "First Floor Wall",
         budgetHours: 1.5,
         invoicedHours: 0,
         remainingHours: 1.5,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 127.50,
-        status: "not-started",
+        status: "pending",
         reference: "",
         ferma: "",
-        category: "new-onsite",
-        isNew: true
+        section: "new-realloc"
       },
       {
         id: 17,
-        name: "🔶 NUOVO: Hospitality Suites e scale",
+        name: "Hospitality Suites & Stairs",
         budgetHours: 2,
         invoicedHours: 0,
         remainingHours: 2,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 170.00,
-        status: "not-started",
+        status: "pending",
         reference: "",
         ferma: "",
-        category: "new-onsite",
-        isNew: true
+        section: "new-realloc"
       },
       {
         id: 18,
-        name: "🔶 NUOVO: Totem e rivestimento colonne",
+        name: "Totems & Column Cladding",
         budgetHours: 2,
         invoicedHours: 0,
         remainingHours: 2,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 170.00,
-        status: "not-started",
+        status: "pending",
         reference: "",
         ferma: "",
-        category: "new-onsite",
-        isNew: true
+        section: "new-realloc"
       },
       {
         id: 19,
-        name: "🔶 NUOVO: Circa 20 banner direzionali",
+        name: "Approx. 20 Directional Banners",
         budgetHours: 3,
         invoicedHours: 0,
         remainingHours: 3,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 255.00,
-        status: "not-started",
+        status: "pending",
         reference: "",
         ferma: "",
-        category: "new-onsite",
-        isNew: true
+        section: "new-realloc"
       },
       {
         id: 20,
-        name: "🔶 NUOVO: Pannello con mega mappa",
+        name: "Mega Map Panel",
         budgetHours: 2,
         invoicedHours: 0,
         remainingHours: 2,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 170.00,
-        status: "not-started",
+        status: "pending",
         reference: "",
         ferma: "",
-        category: "new-onsite",
-        isNew: true
+        section: "new-realloc"
       },
       {
         id: 21,
-        name: "🔶 NUOVO: Registration desk",
+        name: "Registration Desk",
         budgetHours: 1.5,
         invoicedHours: 0,
         remainingHours: 1.5,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 127.50,
-        status: "not-started",
+        status: "pending",
         reference: "",
         ferma: "",
-        category: "new-onsite",
-        isNew: true
+        section: "new-realloc"
       },
       {
         id: 22,
-        name: "🔶 NUOVO: Mappa generale, secondo e terzo piano",
+        name: "General Map - 2nd & 3rd Floors",
         budgetHours: 10,
         invoicedHours: 0,
         remainingHours: 10,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 850.00,
-        status: "not-started",
+        status: "pending",
         reference: "",
         ferma: "",
-        category: "new-onsite",
-        isNew: true
+        section: "new-realloc"
       },
       {
         id: 23,
-        name: "🔶 NUOVO: Programma dell'evento",
+        name: "Event Programme",
         budgetHours: 28,
         invoicedHours: 0,
         remainingHours: 28,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 2380.00,
-        status: "not-started",
+        status: "pending",
         reference: "",
-        ferma: "",
-        category: "new-content",
-        isNew: true,
-        note: "Includes 8h reallocated from Leaflet"
+        ferma: "Includes 8h reallocated from Leaflet",
+        section: "new-realloc"
       },
       {
         id: 24,
-        name: "🔶 NUOVO: Allestimento stand HARBOUR",
+        name: "HARBOUR Stand Setup",
         budgetHours: 5,
         invoicedHours: 0,
         remainingHours: 5,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 425.00,
-        status: "not-started",
+        status: "pending",
         reference: "",
         ferma: "",
-        category: "new-onsite",
-        isNew: true
+        section: "new-budget"
       },
       {
         id: 25,
-        name: "🔶 NUOVO: Controllo generale file e consegna ai fornitori",
+        name: "File QA & Vendor Delivery",
         budgetHours: 4,
         invoicedHours: 0,
         remainingHours: 4,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 340.00,
-        status: "not-started",
+        status: "pending",
         reference: "",
         ferma: "",
-        category: "new-onsite",
-        isNew: true
+        section: "new-budget"
       }
     ];
 
@@ -958,10 +939,10 @@
     }
 
     function renderNav() {
-      let h = '<div class="nav-label">Visualizza</div>' +
-        navItem("all", "▦", "Tutti i task", tasks.length);
+      let h = '<div class="nav-label">View</div>' +
+        navItem("all", "▦", "All Tasks", tasks.length);
 
-      h += '<div class="nav-label">Per Status</div>';
+      h += '<div class="nav-label">By Status</div>';
       STATUSES.forEach(s => {
         const n = tasks.filter(t => t.status === s.key).length;
         if (n > 0) h += navItem(s.key, s.emoji, s.label, n);
@@ -986,7 +967,7 @@
     }
 
     function renderLegend() {
-      let h = '<div class="legend-title">Status Legend</div>';
+      let h = '<div class="legend-title">Status Guide</div>';
       STATUSES.forEach(s => {
         h += '<div class="legend-row"><span class="legend-sw" style="background:' + s.color + '"></span>' +
           s.label + '</div>';
@@ -995,12 +976,21 @@
     }
 
     function renderStats() {
+      const approved = tasks.filter(t => t.section === "approved");
+      const newRealloc = tasks.filter(t => t.section === "new-realloc");
+      const newBudget = tasks.filter(t => t.section === "new-budget");
+
+      const approvedBudget = approved.reduce((s, t) => s + t.budgetHours, 0);
+      const approvedInvoiced = approved.reduce((s, t) => s + t.invoicedHours, 0);
+      const approvedRemaining = approved.reduce((s, t) => s + t.remainingHours, 0);
+
+      const newReallocBudget = newRealloc.reduce((s, t) => s + t.budgetHours, 0);
+      const newBudgetHours = newBudget.reduce((s, t) => s + t.budgetHours, 0);
+
       const totalBudget = tasks.reduce((s, t) => s + t.budgetHours, 0);
       const totalInvoiced = tasks.reduce((s, t) => s + t.invoicedHours, 0);
-      const totalRemaining = tasks.reduce((s, t) => s + t.remainingHours, 0);
       const totalAmountInvoiced = tasks.reduce((s, t) => s + t.amountInvoiced, 0);
       const totalAmountRemaining = tasks.reduce((s, t) => s + t.amountRemaining, 0);
-      const progressPercent = totalBudget > 0 ? Math.round((totalInvoiced / totalBudget) * 100) : 0;
 
       const paid = tasks.filter(t => t.status === "paid").length;
       const pending = tasks.filter(t => t.status === "pending").length;
@@ -1008,32 +998,29 @@
       return `
         <div class="stats">
           <div class="stat-box">
-            <div class="stat-label">Total Budget</div>
+            <div class="stat-label">Approved Budget</div>
+            <div class="stat-value">${approvedBudget}h</div>
+            <div class="stat-desc">Original scope (${approvedInvoiced}h invoiced)</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Available Hours</div>
+            <div class="stat-value">33h</div>
+            <div class="stat-desc">25h Design + 8h Leaflet → reallocated</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">New Production</div>
+            <div class="stat-value">${newReallocBudget + newBudgetHours}h</div>
+            <div class="stat-desc">Coverage: 33h allocated + 41h required</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Additional Budget</div>
+            <div class="stat-value">41h</div>
+            <div class="stat-desc">Pending client approval</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-label">Total Scope</div>
             <div class="stat-value">${totalBudget}h</div>
-            <div class="stat-desc">Hours allocated</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">Invoiced vs Budget</div>
-            <div class="stat-value">${totalInvoiced}h / ${totalBudget}h</div>
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: ${progressPercent}%"></div>
-            </div>
-            <div class="stat-desc">${progressPercent}% Complete</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">Remaining Hours</div>
-            <div class="stat-value">${totalRemaining}h</div>
-            <div class="stat-desc">Work left to do</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">Financial Status</div>
-            <div class="stat-value">€${totalAmountInvoiced.toLocaleString('it-IT')}</div>
-            <div class="stat-desc">Invoiced + €${totalAmountRemaining.toLocaleString('it-IT')} pending</div>
-          </div>
-          <div class="stat-box">
-            <div class="stat-label">Payment Status</div>
-            <div class="stat-value">${paid} Paid</div>
-            <div class="stat-desc">${pending} Pending to Paid</div>
+            <div class="stat-desc">€${totalAmountInvoiced.toLocaleString('it-IT')} paid + €${totalAmountRemaining.toLocaleString('it-IT')} pending</div>
           </div>
         </div>
       `;
@@ -1041,8 +1028,8 @@
 
     function renderTable() {
       const match = t => !term || t.name.toLowerCase().includes(term.toLowerCase());
-
       let filtered = tasks.filter(match);
+
       if (view !== "all") {
         filtered = filtered.filter(t => t.status === view);
       }
@@ -1051,44 +1038,71 @@
         return renderStats() + '<div class="empty">No tasks found.</div>';
       }
 
-      let html = renderStats() + '<div class="table-wrap"><table>' +
-        '<thead><tr>' +
-        '<th style="min-width: 280px">Deliverable / Task</th>' +
-        '<th style="min-width: 200px">Hours</th>' +
-        '<th style="min-width: 120px">Hourly Rate</th>' +
-        '<th style="min-width: 200px">Amount (excl. VAT)</th>' +
-        '<th style="min-width: 140px">Status</th>' +
-        '<th style="min-width: 180px">FERMA</th>' +
-        '</tr></thead><tbody>';
+      let html = renderStats();
 
-      filtered.forEach(t => {
-        const status = statusOf(t.status);
-        const progressPercent = t.budgetHours > 0 ? Math.round((t.invoicedHours / t.budgetHours) * 100) : 0;
+      // Group by section
+      const sections = [
+        { key: "approved", title: "Approved Budget", desc: "Already budgeted & approved deliverables" },
+        { key: "new-realloc", title: "New Production (Using Reallocated Hours)", desc: "Covered by existing budget: 33h from Design & Leaflet" },
+        { key: "new-budget", title: "New Production (Requiring Approval)", desc: "Additional budget required: 41h @ €85/h = €3,485" }
+      ];
 
-        html += '<tr data-task-id="' + t.id + '">' +
-          '<td><span class="task-name">' + t.name + '</span></td>' +
-          '<td>' +
-          '<div class="hours-cell">' +
-          '<div class="hours-numbers">' +
-          '<span class="hours-budget">' + t.invoicedHours + '/' + t.budgetHours + 'h</span>' +
-          '<span class="hours-remaining' + (t.remainingHours < 0 ? ' over' : '') + '">' +
-          (t.remainingHours >= 0 ? '✓ ' : '✗ ') + Math.abs(t.remainingHours) + 'h ' +
-          (t.remainingHours >= 0 ? 'left' : 'over') +
-          '</span>' +
-          '</div>' +
-          '<div class="hours-progress">' +
-          '<div class="hours-progress-fill" style="width: ' + Math.min(progressPercent, 100) + '%"></div>' +
-          '</div>' +
-          '</div>' +
-          '</td>' +
-          '<td>€' + t.hourlyRate.toLocaleString('it-IT') + '</td>' +
-          '<td>' +
-          '<div><span class="amount-invoiced">€' + t.amountInvoiced.toLocaleString('it-IT') + '</span></div>' +
-          (t.amountRemaining > 0 ? '<div><span class="amount-remaining">Estimated: €' + t.amountRemaining.toLocaleString('it-IT') + '</span></div>' : '') +
-          '</td>' +
-          '<td><span class="status-badge ' + t.status + '">' + status.emoji + ' ' + status.label.split(' ')[1] + '</span></td>' +
-          '<td><span class="ferma-cell" data-task-id="' + t.id + '" style="font-size: 11px; color: var(--muted); cursor: pointer; padding: 4px 8px; border-radius: 4px; display: inline-block; min-width: 160px;" title="Doppio click per modificare">' + (t.ferma || '') + '</span></td>' +
-          '</tr>';
+      sections.forEach(section => {
+        const sectionTasks = filtered.filter(t => t.section === section.key);
+        if (sectionTasks.length === 0) return;
+
+        const sectionBudget = sectionTasks.reduce((s, t) => s + t.budgetHours, 0);
+        const sectionAmount = sectionTasks.reduce((s, t) => s + t.amountRemaining, 0);
+
+        html += `<div style="margin: 30px 0 20px 0;">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+            <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text);">${section.title}</h3>
+            <span style="background: var(--orange); color: #1a0d04; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;">${sectionBudget}h</span>
+          </div>
+          <p style="margin: 0 0 16px 0; font-size: 12px; color: var(--muted);">${section.desc}</p>
+        </div>`;
+
+        html += '<div class="table-wrap"><table>' +
+          '<thead><tr>' +
+          '<th style="min-width: 280px">Deliverable / Task</th>' +
+          '<th style="min-width: 200px">Hours</th>' +
+          '<th style="min-width: 120px">Hourly Rate</th>' +
+          '<th style="min-width: 200px">Amount (excl. VAT)</th>' +
+          '<th style="min-width: 140px">Status</th>' +
+          '<th style="min-width: 180px">Notes</th>' +
+          '</tr></thead><tbody>';
+
+        sectionTasks.forEach(t => {
+          const status = statusOf(t.status);
+          const progressPercent = t.budgetHours > 0 ? Math.round((t.invoicedHours / t.budgetHours) * 100) : 0;
+
+          html += '<tr data-task-id="' + t.id + '">' +
+            '<td><span class="task-name">' + t.name + '</span></td>' +
+            '<td>' +
+            '<div class="hours-cell">' +
+            '<div class="hours-numbers">' +
+            '<span class="hours-budget">' + t.invoicedHours + '/' + t.budgetHours + 'h</span>' +
+            '<span class="hours-remaining' + (t.remainingHours < 0 ? ' over' : '') + '">' +
+            (t.remainingHours >= 0 ? '✓ ' : '✗ ') + Math.abs(t.remainingHours) + 'h ' +
+            (t.remainingHours >= 0 ? 'left' : 'over') +
+            '</span>' +
+            '</div>' +
+            '<div class="hours-progress">' +
+            '<div class="hours-progress-fill" style="width: ' + Math.min(progressPercent, 100) + '%"></div>' +
+            '</div>' +
+            '</div>' +
+            '</td>' +
+            '<td>€' + t.hourlyRate.toLocaleString('it-IT') + '</td>' +
+            '<td>' +
+            '<div><span class="amount-invoiced">€' + t.amountInvoiced.toLocaleString('it-IT') + '</span></div>' +
+            (t.amountRemaining > 0 ? '<div><span class="amount-remaining">€' + t.amountRemaining.toLocaleString('it-IT') + '</span></div>' : '') +
+            '</td>' +
+            '<td><span class="status-badge ' + t.status + '">' + status.emoji + ' ' + status.label.split(' ')[1] + '</span></td>' +
+            '<td><span class="ferma-cell" data-task-id="' + t.id + '" style="font-size: 11px; color: var(--muted); cursor: pointer; padding: 4px 8px; border-radius: 4px; display: inline-block; min-width: 160px; white-space: normal;" title="Double-click to edit">' + (t.ferma || '') + '</span></td>' +
+            '</tr>';
+        });
+
+        html += '</tbody></table></div>';
       });
 
       // Attach edit handlers after rendering
@@ -1126,7 +1140,6 @@
       }
       setTimeout(attachFermaEditors, 0);
 
-      html += '</tbody></table></div>';
       return html;
     }
 
