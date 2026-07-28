@@ -727,13 +727,13 @@
       },
       {
         id: 12,
-        name: "Columns",
-        budgetHours: 1,
+        name: "Columns & Column Cladding",
+        budgetHours: 3,
         invoicedHours: 0,
-        remainingHours: 1,
+        remainingHours: 3,
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
-        amountRemaining: 85.00,
+        amountRemaining: 255.00,
         status: "pending",
         reference: "",
         ferma: "",
@@ -755,20 +755,6 @@
       },
       {
         id: 14,
-        name: "Cloakroom Signage",
-        budgetHours: 1,
-        invoicedHours: 0,
-        remainingHours: 1,
-        hourlyRate: 85.00,
-        amountInvoiced: 0.00,
-        amountRemaining: 85.00,
-        status: "pending",
-        reference: "",
-        ferma: "",
-        section: "new-realloc"
-      },
-      {
-        id: 15,
         name: "Prism on Elevator Cage",
         budgetHours: 3,
         invoicedHours: 0,
@@ -782,7 +768,7 @@
         section: "new-realloc"
       },
       {
-        id: 16,
+        id: 15,
         name: "First Floor Wall",
         budgetHours: 1.5,
         invoicedHours: 0,
@@ -796,7 +782,7 @@
         section: "new-realloc"
       },
       {
-        id: 17,
+        id: 16,
         name: "Hospitality Suites & Stairs",
         budgetHours: 2,
         invoicedHours: 0,
@@ -810,21 +796,7 @@
         section: "new-realloc"
       },
       {
-        id: 18,
-        name: "Totems & Column Cladding",
-        budgetHours: 2,
-        invoicedHours: 0,
-        remainingHours: 2,
-        hourlyRate: 85.00,
-        amountInvoiced: 0.00,
-        amountRemaining: 170.00,
-        status: "pending",
-        reference: "",
-        ferma: "",
-        section: "new-realloc"
-      },
-      {
-        id: 19,
+        id: 17,
         name: "Approx. 20 Directional Banners",
         budgetHours: 3,
         invoicedHours: 0,
@@ -838,7 +810,7 @@
         section: "new-realloc"
       },
       {
-        id: 20,
+        id: 18,
         name: "Mega Map Panel",
         budgetHours: 2,
         invoicedHours: 0,
@@ -852,7 +824,7 @@
         section: "new-realloc"
       },
       {
-        id: 21,
+        id: 19,
         name: "Registration Desk",
         budgetHours: 1.5,
         invoicedHours: 0,
@@ -866,7 +838,7 @@
         section: "new-realloc"
       },
       {
-        id: 22,
+        id: 20,
         name: "General Map - 2nd & 3rd Floors",
         budgetHours: 10,
         invoicedHours: 0,
@@ -880,7 +852,7 @@
         section: "new-realloc"
       },
       {
-        id: 23,
+        id: 21,
         name: "Event Programme",
         budgetHours: 28,
         invoicedHours: 0,
@@ -894,7 +866,7 @@
         section: "new-realloc"
       },
       {
-        id: 24,
+        id: 22,
         name: "HARBOUR Stand Setup",
         budgetHours: 5,
         invoicedHours: 0,
@@ -905,21 +877,7 @@
         status: "pending",
         reference: "",
         ferma: "",
-        section: "new-budget"
-      },
-      {
-        id: 25,
-        name: "File QA & Vendor Delivery",
-        budgetHours: 4,
-        invoicedHours: 0,
-        remainingHours: 4,
-        hourlyRate: 85.00,
-        amountInvoiced: 0.00,
-        amountRemaining: 340.00,
-        status: "pending",
-        reference: "",
-        ferma: "",
-        section: "new-budget"
+        section: "new-realloc"
       }
     ];
 
@@ -978,19 +936,25 @@
     function renderStats() {
       const approved = tasks.filter(t => t.section === "approved");
       const newRealloc = tasks.filter(t => t.section === "new-realloc");
-      const newBudget = tasks.filter(t => t.section === "new-budget");
 
       const approvedBudget = approved.reduce((s, t) => s + t.budgetHours, 0);
       const approvedInvoiced = approved.reduce((s, t) => s + t.invoicedHours, 0);
       const approvedRemaining = approved.reduce((s, t) => s + t.remainingHours, 0);
 
       const newReallocBudget = newRealloc.reduce((s, t) => s + t.budgetHours, 0);
-      const newBudgetHours = newBudget.reduce((s, t) => s + t.budgetHours, 0);
+      const newReallocAmount = newRealloc.reduce((s, t) => s + t.amountRemaining, 0);
+
+      // Breakdown: 33h reallocated, rest is new budget
+      const reallocatedHours = 33;
+      const newBudgetHours = Math.max(0, newReallocBudget - reallocatedHours);
+      const newBudgetAmount = newBudgetHours * 85;
+
+      // Original pending: €5.890 (from approved budget remaining work)
+      const originalPending = 5890;
 
       const totalBudget = tasks.reduce((s, t) => s + t.budgetHours, 0);
       const totalInvoiced = tasks.reduce((s, t) => s + t.invoicedHours, 0);
       const totalAmountInvoiced = tasks.reduce((s, t) => s + t.amountInvoiced, 0);
-      const totalAmountRemaining = tasks.reduce((s, t) => s + t.amountRemaining, 0);
 
       const paid = tasks.filter(t => t.status === "paid").length;
       const pending = tasks.filter(t => t.status === "pending").length;
@@ -1009,18 +973,18 @@
           </div>
           <div class="stat-box">
             <div class="stat-label">New Production</div>
-            <div class="stat-value">${newReallocBudget + newBudgetHours}h</div>
-            <div class="stat-desc">Coverage: 33h allocated + 41h required</div>
+            <div class="stat-value">${newReallocBudget}h</div>
+            <div class="stat-desc">Coverage: 33h allocated + ${newBudgetHours}h required</div>
           </div>
           <div class="stat-box">
-            <div class="stat-label">Additional Budget</div>
-            <div class="stat-value">41h</div>
-            <div class="stat-desc">Pending client approval</div>
+            <div class="stat-label">Financial Status</div>
+            <div class="stat-value">€${totalAmountInvoiced.toLocaleString('it-IT')}</div>
+            <div class="stat-desc">Paid • €${originalPending.toLocaleString('it-IT')} pending (approved) • €${Math.round(newBudgetAmount).toLocaleString('it-IT')} (new production)</div>
           </div>
           <div class="stat-box">
             <div class="stat-label">Total Scope</div>
             <div class="stat-value">${totalBudget}h</div>
-            <div class="stat-desc">€${totalAmountInvoiced.toLocaleString('it-IT')} paid + €${totalAmountRemaining.toLocaleString('it-IT')} pending</div>
+            <div class="stat-desc">${totalInvoiced}h invoiced • ${approvedRemaining + reallocatedHours}h in progress • ${newBudgetHours}h awaiting approval</div>
           </div>
         </div>
       `;
