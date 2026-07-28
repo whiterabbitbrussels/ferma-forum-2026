@@ -878,6 +878,20 @@
         reference: "",
         ferma: "",
         section: "new-realloc"
+      },
+      {
+        id: 23,
+        name: "File QA & Vendor Delivery",
+        budgetHours: 4,
+        invoicedHours: 0,
+        remainingHours: 4,
+        hourlyRate: 85.00,
+        amountInvoiced: 0.00,
+        amountRemaining: 0.00,
+        status: "pending",
+        reference: "",
+        ferma: "Covered by Project Management (25h available)",
+        section: "new-realloc"
       }
     ];
 
@@ -942,11 +956,13 @@
       const approvedRemaining = approved.reduce((s, t) => s + t.remainingHours, 0);
 
       const newReallocBudget = newRealloc.reduce((s, t) => s + t.budgetHours, 0);
-      const newReallocAmount = newRealloc.reduce((s, t) => s + t.amountRemaining, 0);
 
-      // Breakdown: 33h reallocated, rest is new budget
+      // Exclude tasks covered by PM (where amountRemaining is 0)
+      const newReallocPaid = newRealloc.filter(t => t.amountRemaining > 0).reduce((s, t) => s + t.budgetHours, 0);
+
+      // Breakdown: 33h reallocated, rest is new budget (excluding PM-covered tasks)
       const reallocatedHours = 33;
-      const newBudgetHours = Math.max(0, newReallocBudget - reallocatedHours);
+      const newBudgetHours = Math.max(0, newReallocPaid - reallocatedHours);
       const newBudgetAmount = newBudgetHours * 85;
 
       // Original pending: €5.890 (from approved budget remaining work)
