@@ -582,7 +582,7 @@
         amountRemaining: 0.00,
         status: "paid",
         reference: "WR0184",
-        ferma: "PAID- WR0184- 1,000 €",
+        ferma: "PAID - WR0184 - 3.000 €",
         section: "approved"
       },
       {
@@ -596,7 +596,7 @@
         amountRemaining: 0.00,
         status: "paid",
         reference: "WR0184",
-        ferma: "PAID- WR0184- 2,040 €",
+        ferma: "PAID - WR0184 - 2.040 €",
         section: "approved"
       },
       {
@@ -606,11 +606,11 @@
         invoicedHours: 4,
         remainingHours: 0,
         hourlyRate: 85.00,
-        amountInvoiced: 340.00,
-        amountRemaining: 0.00,
-        status: "paid",
-        reference: "WR0184",
-        ferma: "PAID",
+        amountInvoiced: 0.00,
+        amountRemaining: 340.00,
+        status: "pending",
+        reference: "",
+        ferma: "Delivered - not yet invoiced (340 €)",
         section: "approved"
       },
       {
@@ -634,11 +634,11 @@
         invoicedHours: 7,
         remainingHours: 25,
         hourlyRate: 85.00,
-        amountInvoiced: 595.00,
-        amountRemaining: 2125.00,
+        amountInvoiced: 0.00,
+        amountRemaining: 2720.00,
         status: "pending",
-        reference: "WR195",
-        ferma: "25h reallocated to New Production",
+        reference: "",
+        ferma: "7h delivered not yet invoiced - 25h reallocated to New Production",
         section: "approved"
       },
       {
@@ -707,7 +707,7 @@
         amountInvoiced: 1615.00,
         amountRemaining: 2125.00,
         status: "pending",
-        reference: "WR195",
+        reference: "WR0195",
         ferma: "25h reallocated to New Production (coordination)",
         section: "approved"
       },
@@ -1138,7 +1138,7 @@
       renderNav();
       renderLegend();
       const ct = $("#content");
-      ct.innerHTML = renderTable();
+      ct.innerHTML = renderTable() + '<div class="ai-badge">Created by White Rabbit with AI assistance</div>';
     }
 
     $("#search").oninput = (e) => {
@@ -1151,19 +1151,15 @@
 
   <style>
     .ai-badge {
-      position: fixed;
-      bottom: 16px;
-      right: 16px;
+      margin: 40px 0 8px auto;
+      width: fit-content;
       background: #d4c4b0;
       color: #2a2420;
       padding: 8px 12px;
       border-radius: 6px;
       font-size: 11px;
       font-weight: 500;
-      z-index: 100;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
   </style>
-  <div class="ai-badge">Created by White Rabbit with AI assistance</div>
 </body>
 </html>
