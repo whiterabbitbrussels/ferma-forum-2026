@@ -691,10 +691,10 @@
         remainingHours: -5,
         hourlyRate: 90.00,
         amountInvoiced: 1890.00,
-        amountRemaining: 450.00,
+        amountRemaining: -450.00,
         status: "paid",
         reference: "WR0194",
-        ferma: "5h over - budget overflow to New Production",
+        ferma: "5h over - consumes 5h from the remaining envelope",
         section: "approved"
       },
       {
@@ -957,23 +957,21 @@
 
       const newReallocBudget = newRealloc.reduce((s, t) => s + t.budgetHours, 0);
 
-      // Exclude tasks covered by PM (where amountRemaining is 0)
+      // Production work in New Production, excluding the PM Coordination line (billed €0)
       const newReallocPaid = newRealloc.filter(t => t.amountRemaining > 0).reduce((s, t) => s + t.budgetHours, 0);
 
-      // Breakdown: 59h reallocated from First Estimation (Design 25h + PPT 2h + Leaflet 8h + Flyer 4h + Animation -5h over + PM 25h)
-      const reallocatedHours = 59;
+      // The 25h of PM still open are earmarked for the New Production PM Coordination line,
+      // so they are NOT available to fund production work. Only the rest can be reallocated:
+      // Design 25h + PPT 2h + Leaflet 8h + Flyer 4h - Animation 5h over = 34h
+      const pmEarmarkedHours = 25;
+      const reallocatedHours = approvedRemaining - pmEarmarkedHours;
       const newBudgetHours = Math.max(0, newReallocPaid - reallocatedHours);
       const newBudgetAmount = newBudgetHours * 85;
 
-      // Original pending: €4.990 (from approved budget remaining work - 59h reallocated)
-      const originalPending = 4990;
+      // Still to bill on the approved budget (the 59h left, net of the Animation overrun)
+      const originalPending = approved.reduce((s, t) => s + t.amountRemaining, 0);
 
-      const totalBudget = tasks.reduce((s, t) => s + t.budgetHours, 0);
-      const totalInvoiced = tasks.reduce((s, t) => s + t.invoicedHours, 0);
       const totalAmountInvoiced = tasks.reduce((s, t) => s + t.amountInvoiced, 0);
-
-      const paid = tasks.filter(t => t.status === "paid").length;
-      const pending = tasks.filter(t => t.status === "pending").length;
 
       return `
         <div class="stats">
@@ -983,24 +981,24 @@
             <div class="stat-desc">Original scope (${approvedInvoiced}h invoiced)</div>
           </div>
           <div class="stat-box">
-            <div class="stat-label">Available Hours</div>
-            <div class="stat-value">59h</div>
-            <div class="stat-desc">From First Estimation: Design 25h + PPT 2h + Leaflet 8h + Flyer 4h + PM 25h (Animation -5h over)</div>
+            <div class="stat-label">Available to Reallocate</div>
+            <div class="stat-value">${reallocatedHours}h</div>
+            <div class="stat-desc">Design 25h + PPT 2h + Leaflet 8h + Flyer 4h − Animation 5h over. PM 25h stay earmarked for coordination.</div>
           </div>
           <div class="stat-box">
             <div class="stat-label">New Production</div>
             <div class="stat-value">${newReallocBudget}h</div>
-            <div class="stat-desc">Coverage: 33h allocated + ${newBudgetHours}h required</div>
+            <div class="stat-desc">${reallocatedHours}h reallocated + ${pmEarmarkedHours}h PM earmarked + ${newBudgetHours}h to approve</div>
           </div>
           <div class="stat-box">
-            <div class="stat-label">Financial Status</div>
-            <div class="stat-value">€${totalAmountInvoiced.toLocaleString('it-IT')}</div>
-            <div class="stat-desc">Paid • €${originalPending.toLocaleString('it-IT')} pending (approved) • €${Math.round(newBudgetAmount).toLocaleString('it-IT')} (new production)</div>
+            <div class="stat-label">New Budget to Approve</div>
+            <div class="stat-value">€${Math.round(newBudgetAmount).toLocaleString('it-IT')}</div>
+            <div class="stat-desc">${newBudgetHours}h @ €85/h not covered by reallocation</div>
           </div>
           <div class="stat-box">
-            <div class="stat-label">Total Scope</div>
-            <div class="stat-value">${totalBudget}h</div>
-            <div class="stat-desc">${totalInvoiced}h invoiced • ${approvedRemaining + reallocatedHours}h in progress • ${newBudgetHours}h awaiting approval</div>
+            <div class="stat-label">Total Project Value</div>
+            <div class="stat-value">€${Math.round(totalAmountInvoiced + originalPending + newBudgetAmount).toLocaleString('it-IT')}</div>
+            <div class="stat-desc">€${totalAmountInvoiced.toLocaleString('it-IT')} invoiced • €${Math.round(originalPending).toLocaleString('it-IT')} pending (approved) • €${Math.round(newBudgetAmount).toLocaleString('it-IT')} to approve</div>
           </div>
         </div>
       `;
@@ -1022,8 +1020,7 @@
 
       // Group by section
       const sections = [
-        { key: "new-realloc", title: "New Production (Using Reallocated Hours)", desc: "Covered by existing budget: 59h from First Estimation" },
-        { key: "new-budget", title: "New Production (Requiring Approval)", desc: "Additional budget required: 41h @ €85/h = €3,485" },
+        { key: "new-realloc", title: "New Production", desc: "34h reallocated from First Estimation + 25h PM earmarked for coordination — the remaining 38h require approval (€3.230)" },
         { key: "approved", title: "First Estimation", desc: "Already budgeted & approved deliverables" }
       ];
 
@@ -1085,12 +1082,7 @@
         // Add totals row
         const totalInvoiced = sectionTasks.reduce((s, t) => s + t.invoicedHours, 0);
         const totalBudget = sectionTasks.reduce((s, t) => s + t.budgetHours, 0);
-        let totalAmount = sectionTasks.reduce((s, t) => s + t.amountInvoiced + t.amountRemaining, 0);
-
-        // For new-realloc: add pending from approved budget (€4990 from 59h reallocated)
-        if (section.key === "new-realloc") {
-          totalAmount += 4990;
-        }
+        const totalAmount = sectionTasks.reduce((s, t) => s + t.amountInvoiced + t.amountRemaining, 0);
 
         html += '<tr style="background: var(--panel-2); font-weight: 600; border-top: 2px solid var(--line);">' +
           '<td style="color: var(--orange);">TOTAL</td>' +
