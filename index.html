@@ -1022,9 +1022,9 @@
 
       // Group by section
       const sections = [
-        { key: "approved", title: "Approved Budget", desc: "Already budgeted & approved deliverables" },
         { key: "new-realloc", title: "New Production (Using Reallocated Hours)", desc: "Covered by existing budget: 33h from Design & Leaflet" },
-        { key: "new-budget", title: "New Production (Requiring Approval)", desc: "Additional budget required: 41h @ €85/h = €3,485" }
+        { key: "new-budget", title: "New Production (Requiring Approval)", desc: "Additional budget required: 41h @ €85/h = €3,485" },
+        { key: "approved", title: "First Estimation", desc: "Already budgeted & approved deliverables" }
       ];
 
       sections.forEach(section => {
@@ -1081,6 +1081,20 @@
             '<td><span class="ferma-cell" data-task-id="' + t.id + '" style="font-size: 11px; color: var(--muted); cursor: pointer; padding: 4px 8px; border-radius: 4px; display: inline-block; min-width: 160px; white-space: normal;" title="Double-click to edit">' + (t.ferma || '') + '</span></td>' +
             '</tr>';
         });
+
+        // Add totals row
+        const totalInvoiced = sectionTasks.reduce((s, t) => s + t.invoicedHours, 0);
+        const totalBudget = sectionTasks.reduce((s, t) => s + t.budgetHours, 0);
+        const totalAmount = sectionTasks.reduce((s, t) => s + t.amountInvoiced + t.amountRemaining, 0);
+
+        html += '<tr style="background: var(--panel-2); font-weight: 600; border-top: 2px solid var(--line);">' +
+          '<td style="color: var(--orange);">TOTAL</td>' +
+          '<td style="color: var(--orange);">' + totalInvoiced + '/' + totalBudget + 'h</td>' +
+          '<td></td>' +
+          '<td style="color: var(--orange);">€' + totalAmount.toLocaleString('it-IT') + '</td>' +
+          '<td></td>' +
+          '<td></td>' +
+          '</tr>';
 
         html += '</tbody></table></div>';
       });
