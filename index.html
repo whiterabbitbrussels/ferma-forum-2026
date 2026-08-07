@@ -960,13 +960,13 @@
       // Exclude tasks covered by PM (where amountRemaining is 0)
       const newReallocPaid = newRealloc.filter(t => t.amountRemaining > 0).reduce((s, t) => s + t.budgetHours, 0);
 
-      // Breakdown: 76h reallocated from First Estimation (Design 25h + PPT 2h + Leaflet 8h + Flyer 4h + Animation 5h + PM 25h + Signage 7h)
-      const reallocatedHours = 76;
+      // Breakdown: 59h reallocated from First Estimation (Design 25h + PPT 2h + Leaflet 8h + Flyer 4h + Animation -5h over + PM 25h)
+      const reallocatedHours = 59;
       const newBudgetHours = Math.max(0, newReallocPaid - reallocatedHours);
       const newBudgetAmount = newBudgetHours * 85;
 
-      // Original pending: €6.485 (from approved budget remaining work - all 76h reallocated)
-      const originalPending = 6485;
+      // Original pending: €4.990 (from approved budget remaining work - 59h reallocated)
+      const originalPending = 4990;
 
       const totalBudget = tasks.reduce((s, t) => s + t.budgetHours, 0);
       const totalInvoiced = tasks.reduce((s, t) => s + t.invoicedHours, 0);
@@ -984,8 +984,8 @@
           </div>
           <div class="stat-box">
             <div class="stat-label">Available Hours</div>
-            <div class="stat-value">76h</div>
-            <div class="stat-desc">From First Estimation: Design 25h + PPT 2h + Leaflet 8h + Flyer 4h + Animation 5h + PM 25h + Signage 7h</div>
+            <div class="stat-value">59h</div>
+            <div class="stat-desc">From First Estimation: Design 25h + PPT 2h + Leaflet 8h + Flyer 4h + PM 25h (Animation -5h over)</div>
           </div>
           <div class="stat-box">
             <div class="stat-label">New Production</div>
@@ -1022,7 +1022,7 @@
 
       // Group by section
       const sections = [
-        { key: "new-realloc", title: "New Production (Using Reallocated Hours)", desc: "Covered by existing budget: 76h from First Estimation" },
+        { key: "new-realloc", title: "New Production (Using Reallocated Hours)", desc: "Covered by existing budget: 59h from First Estimation" },
         { key: "new-budget", title: "New Production (Requiring Approval)", desc: "Additional budget required: 41h @ €85/h = €3,485" },
         { key: "approved", title: "First Estimation", desc: "Already budgeted & approved deliverables" }
       ];
@@ -1087,9 +1087,9 @@
         const totalBudget = sectionTasks.reduce((s, t) => s + t.budgetHours, 0);
         let totalAmount = sectionTasks.reduce((s, t) => s + t.amountInvoiced + t.amountRemaining, 0);
 
-        // For new-realloc: add pending from approved budget (€6485 from 76h reallocated)
+        // For new-realloc: add pending from approved budget (€4990 from 59h reallocated)
         if (section.key === "new-realloc") {
-          totalAmount += 6485;
+          totalAmount += 4990;
         }
 
         html += '<tr style="background: var(--panel-2); font-weight: 600; border-top: 2px solid var(--line);">' +
