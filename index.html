@@ -1071,7 +1071,12 @@
         // Add totals row
         const totalInvoiced = sectionTasks.reduce((s, t) => s + t.invoicedHours, 0);
         const totalBudget = sectionTasks.reduce((s, t) => s + t.budgetHours, 0);
-        const totalAmount = sectionTasks.reduce((s, t) => s + t.amountInvoiced + t.amountRemaining, 0);
+        let totalAmount = sectionTasks.reduce((s, t) => s + t.amountInvoiced + t.amountRemaining, 0);
+
+        // For new-realloc: add pending from approved budget (€5890)
+        if (section.key === "new-realloc") {
+          totalAmount += 5890;
+        }
 
         html += '<tr style="background: var(--panel-2); font-weight: 600; border-top: 2px solid var(--line);">' +
           '<td style="color: var(--orange);">TOTAL</td>' +
