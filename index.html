@@ -1134,42 +1134,7 @@
       return html;
     }
 
-    function renderTimesheet() {
-      const now = new Date();
-      const today = now.toISOString().split('T')[0];
-      const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - now.getDay());
-
-      // Sample time tracking data (in production, this comes from Google Calendar API)
-      const timeEntries = [
-        { taskId: 1, taskName: 'Creative Universe Concept', date: today, hours: 2.5, description: 'Design review' },
-        { taskId: 2, taskName: 'Logo Design & Rationale', date: today, hours: 1.5, description: 'Client feedback' },
-        { taskId: 4, taskName: 'Design for Onsite Master Materials', date: today, hours: 3, description: 'Layout mockups' }
-      ];
-
-      let html = '<div class="timesheet-section"><h3 style="margin-bottom: 16px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">⏱ TIME TRACKING (Today)</h3>';
-      html += '<button id="syncCalendar" style="margin-bottom: 16px; padding: 8px 14px; background: var(--orange); color: var(--bg); border: none; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">Sync from Google Calendar</button>';
-
-      if (timeEntries.length === 0) {
-        html += '<p style="color: var(--muted); font-size: 12px;">No time entries for today.</p>';
-      } else {
-        html += '<div class="timesheet-table"><table style="width: 100%; border-collapse: collapse; font-size: 12px;">';
-        html += '<tr style="border-bottom: 1px solid var(--line);"><th style="text-align: left; padding: 8px; color: var(--muted); font-weight: 500;">Task</th><th style="text-align: right; padding: 8px; color: var(--muted); font-weight: 500;">Hours</th><th style="text-align: left; padding: 8px; color: var(--muted); font-weight: 500;">Notes</th></tr>';
-
-        let totalHours = 0;
-        timeEntries.forEach(entry => {
-          const task = tasks.find(t => t.id === entry.taskId);
-          const taskName = task ? task.name : entry.taskName;
-          totalHours += entry.hours;
-          html += '<tr style="border-bottom: 1px solid var(--line);"><td style="padding: 8px; color: var(--text);">' + taskName + '</td><td style="text-align: right; padding: 8px; color: var(--orange);">' + entry.hours + 'h</td><td style="padding: 8px; color: var(--muted);">' + entry.description + '</td></tr>';
-        });
-
-        html += '<tr style="background: var(--panel-2); font-weight: 600;"><td style="padding: 8px; color: var(--text);">Total</td><td style="text-align: right; padding: 8px; color: var(--orange);">' + totalHours + 'h</td><td></td></tr>';
-        html += '</table></div>';
-      }
-      html += '</div>';
-      return html;
-    }
+    let timeEntries = [];
 
     function render() {
       renderNav();
@@ -1180,8 +1145,6 @@
       // Sync button handler
       document.getElementById('syncCalendar').addEventListener('click', syncFromGoogleCalendar);
     }
-
-    let timeEntries = [];
 
     function syncFromGoogleCalendar() {
       const calendarId = prompt('Enter your Google Calendar ID or URL (or press Cancel to manually paste events):\n\nFor automated sync, set up a webhook using n8n or Google Apps Script that posts events to an endpoint.');
