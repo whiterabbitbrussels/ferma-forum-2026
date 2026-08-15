@@ -1135,6 +1135,9 @@
     }
 
     let timeEntries = [];
+    // 🔗 Google Apps Script Deployment URL (optional - for auto-sync)
+    // Generate this URL: https://script.google.com/macros/d/YOUR_PROJECT_ID/usercopy
+    const GOOGLE_CALENDAR_SYNC_URL = ''; // Paste your deployment URL here to enable auto-sync
 
     function render() {
       renderNav();
@@ -1226,6 +1229,18 @@
       term = e.target.value;
       render();
     };
+
+    // Auto-sync from Google Calendar if configured
+    if (GOOGLE_CALENDAR_SYNC_URL && GOOGLE_CALENDAR_SYNC_URL.trim()) {
+      fetch(GOOGLE_CALENDAR_SYNC_URL)
+        .then(r => r.json())
+        .then(data => {
+          if (data.success && data.events) {
+            timeEntries = data.events;
+          }
+        })
+        .catch(e => console.log('Calendar sync skipped - URL not configured'));
+    }
 
     render();
   </script>
