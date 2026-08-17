@@ -1145,43 +1145,79 @@
       ct.innerHTML = renderTable() + renderTimesheet() + '<div class="ai-badge">Created by White Rabbit with AI assistance</div>';
 
       // Sync button handler
-      document.getElementById('syncCalendar').addEventListener('click', syncFromGoogleCalendar);
+      const syncBtn = document.getElementById('syncCalendar');
+      if (syncBtn) syncBtn.addEventListener('click', syncFromGoogleCalendar);
+
+      // Refresh button handler
+      const refreshBtn = document.getElementById('refreshTimesheet');
+      if (refreshBtn) refreshBtn.addEventListener('click', refreshTimesheet);
     }
 
     function syncFromGoogleCalendar() {
-      const calendarId = prompt('Enter your Google Calendar ID or URL (or press Cancel to manually paste events):\n\nFor automated sync, set up a webhook using n8n or Google Apps Script that posts events to an endpoint.');
+      const savedEndpoint = localStorage.getItem('FERMA_CALENDAR_ENDPOINT');
+      let endpoint = savedEndpoint;
 
-      if (calendarId === null) {
-        // Manual paste mode
-        const jsonStr = prompt('Paste your Google Calendar events as JSON:\n\nFormat: [{"taskName":"Task Name","date":"2026-08-12","hours":2,"description":"Notes"}]');
-        if (jsonStr) {
-          try {
-            const parsed = JSON.parse(jsonStr);
-            timeEntries = Array.isArray(parsed) ? parsed : [parsed];
-            render();
-            alert('Events imported successfully! Total entries: ' + timeEntries.length);
-          } catch (e) {
-            alert('Invalid JSON format. Please try again.');
+      if (!endpoint) {
+        const calendarId = prompt('Enter your Google Calendar ID or URL (or press Cancel to manually paste events):\n\nFor automated sync, set up a webhook using n8n or Google Apps Script that posts events to an endpoint.');
+
+        if (calendarId === null) {
+          // Manual paste mode
+          const jsonStr = prompt('Paste your Google Calendar events as JSON:\n\nFormat: [{"taskName":"Task Name","date":"2026-08-12","hours":2,"description":"Notes"}]');
+          if (jsonStr) {
+            try {
+              const parsed = JSON.parse(jsonStr);
+              timeEntries = Array.isArray(parsed) ? parsed : [parsed];
+              render();
+              alert('Events imported successfully! Total entries: ' + timeEntries.length);
+            } catch (e) {
+              alert('Invalid JSON format. Please try again.');
+            }
           }
+          return;
         }
-        return;
+
+        endpoint = calendarId.startsWith('http') ? calendarId : 'https://script.google.com/macros/d/' + calendarId + '/usercopy';
       }
 
-      // Try to fetch from endpoint (for automated setup)
-      if (calendarId.trim()) {
-        const endpoint = calendarId.startsWith('http') ? calendarId : 'https://script.google.com/macros/d/' + calendarId + '/usercopy';
+      // Fetch from endpoint
+      if (endpoint && endpoint.trim()) {
         fetch(endpoint)
           .then(r => r.json())
           .then(data => {
-            timeEntries = data.events || data || [];
-            render();
-            alert('Synced ' + timeEntries.length + ' events from Google Calendar');
+            if (data.success && data.events) {
+              timeEntries = data.events;
+              localStorage.setItem('FERMA_CALENDAR_ENDPOINT', endpoint);
+              render();
+              alert('✓ Synced ' + timeEntries.length + ' events from Google Calendar');
+            }
           })
           .catch(e => {
             console.error('Sync error:', e);
-            alert('Could not sync calendar. Make sure the endpoint is accessible. You can still paste events manually.');
+            alert('Could not sync calendar. Make sure the endpoint is accessible.');
           });
       }
+    }
+
+    function refreshTimesheet() {
+      const endpoint = localStorage.getItem('FERMA_CALENDAR_ENDPOINT');
+      if (!endpoint) {
+        alert('No calendar endpoint saved. Click "Sync from Google Calendar" first.');
+        syncFromGoogleCalendar();
+        return;
+      }
+
+      fetch(endpoint)
+        .then(r => r.json())
+        .then(data => {
+          if (data.success && data.events) {
+            timeEntries = data.events;
+            render();
+          }
+        })
+        .catch(e => {
+          console.error('Refresh error:', e);
+          alert('Could not refresh. Check your internet connection.');
+        });
     }
 
     function getTimeEntriesForTask(taskId) {
@@ -1210,7 +1246,10 @@
       });
 
       let html = '<div class="timesheet-section"><h3 style="margin-bottom: 16px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">⏱ TIME TRACKING (Last 30 Days)</h3>';
-      html += '<button id="syncCalendar" style="margin-bottom: 16px; padding: 8px 14px; background: var(--orange); color: var(--bg); border: none; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">↻ Sync from Google Calendar</button>';
+      html += '<div style="display: flex; gap: 8px; margin-bottom: 16px;">';
+      html += '<button id="syncCalendar" style="padding: 8px 14px; background: var(--orange); color: var(--bg); border: none; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">↻ Sync from Google Calendar</button>';
+      html += '<button id="refreshTimesheet" style="padding: 8px 14px; background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">⟳ Refresh</button>';
+      html += '</div>';
 
       if (timeEntries.length === 0) {
         html += '<p style="color: var(--muted); font-size: 12px;">No FRM time entries in the last 30 days. Click "Sync from Google Calendar" to import events.</p>';
