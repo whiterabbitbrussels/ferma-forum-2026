@@ -1151,6 +1151,16 @@
       // Refresh button handler
       const refreshBtn = document.getElementById('refreshTimesheet');
       if (refreshBtn) refreshBtn.addEventListener('click', refreshTimesheet);
+
+      // Change endpoint handler
+      const changeLink = document.getElementById('changeEndpoint');
+      if (changeLink) {
+        changeLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          localStorage.removeItem('FERMA_CALENDAR_ENDPOINT');
+          syncFromGoogleCalendar();
+        });
+      }
     }
 
     function syncFromGoogleCalendar() {
@@ -1246,9 +1256,10 @@
       });
 
       let html = '<div class="timesheet-section"><h3 style="margin-bottom: 16px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">⏱ TIME TRACKING (Last 30 Days)</h3>';
-      html += '<div style="display: flex; gap: 8px; margin-bottom: 16px;">';
+      html += '<div style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center;">';
       html += '<button id="syncCalendar" style="padding: 8px 14px; background: var(--orange); color: var(--bg); border: none; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">↻ Sync from Google Calendar</button>';
       html += '<button id="refreshTimesheet" style="padding: 8px 14px; background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">⟳ Refresh</button>';
+      html += '<a id="changeEndpoint" href="#" style="color: var(--orange-soft); font-size: 11px; text-decoration: none; margin-left: auto;">Change endpoint</a>';
       html += '</div>';
 
       if (timeEntries.length === 0) {
