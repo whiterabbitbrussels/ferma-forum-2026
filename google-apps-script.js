@@ -6,10 +6,12 @@ function doGet(e) {
     const calendarId = 'whiterabbitbrussels@gmail.com';
     const calendar = CalendarApp.getCalendarById(calendarId);
 
-    // Get today's events
+    // Get events from last 30 days
     const now = new Date();
-    const startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-    const endTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    const startTime = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000)); // 30 days ago
+    startTime.setHours(0, 0, 0, 0);
+    const endTime = new Date();
+    endTime.setHours(23, 59, 59, 999);
 
     const events = calendar.getEvents(startTime, endTime);
 
