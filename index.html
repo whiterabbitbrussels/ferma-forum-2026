@@ -1240,11 +1240,14 @@
     }
 
     function renderTimesheet() {
+      // Sort entries by date (newest first)
+      const sortedEntries = [...timeEntries].sort((a, b) => new Date(b.date) - new Date(a.date));
+
       // Group entries by task name
       const entriesByTask = {};
       let totalAllHours = 0;
 
-      timeEntries.forEach(entry => {
+      sortedEntries.forEach(entry => {
         const taskName = entry.taskName || 'Unknown Task';
         if (!entriesByTask[taskName]) {
           entriesByTask[taskName] = { entries: [], totalHours: 0 };
@@ -1270,7 +1273,7 @@
 
         Object.keys(entriesByTask).sort().forEach(taskName => {
           const taskData = entriesByTask[taskName];
-          const dates = taskData.entries.map(e => e.date).join(', ');
+          const dates = taskData.entries.map(e => e.date).sort().reverse().join(', ');
           html += '<tr style="border-bottom: 1px solid var(--line);"><td style="padding: 8px; color: var(--text);">' + taskName + '</td><td style="text-align: right; padding: 8px; color: var(--orange);">' + taskData.totalHours + 'h</td><td style="padding: 8px; color: var(--muted); font-size: 10px;">' + dates + '</td></tr>';
         });
 
