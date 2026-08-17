@@ -19,6 +19,7 @@
       --c-pending: #f59e0b;
       --c-not-started: #ef4444;
       --c-over: #ec4899;
+      --c-tracked: #38bdf8;
     }
 
     * {
@@ -388,6 +389,11 @@
       font-weight: 600;
     }
 
+    .hours-tracked {
+      color: var(--c-tracked);
+      font-size: 11px;
+    }
+
     .hours-progress {
       width: 120px;
       height: 24px;
@@ -396,11 +402,25 @@
       overflow: hidden;
       position: relative;
       border: 1px solid var(--line);
+      display: flex;
     }
 
     .hours-progress-fill {
       height: 100%;
       background: linear-gradient(90deg, var(--orange) 0%, var(--orange-soft) 100%);
+      transition: width 0.3s ease;
+    }
+
+    /* Hours logged in the calendar but not yet invoiced */
+    .hours-progress-tracked {
+      height: 100%;
+      background: repeating-linear-gradient(
+        45deg,
+        var(--c-tracked) 0px,
+        var(--c-tracked) 4px,
+        rgba(0, 0, 0, 0.25) 4px,
+        rgba(0, 0, 0, 0.25) 8px
+      );
       transition: width 0.3s ease;
     }
 
@@ -902,6 +922,145 @@
     const $ = s => document.querySelector(s);
     const statusOf = k => STATUSES.find(s => s.key === k);
 
+    // ── FERMA notes persistence ────────────────────────────────────────
+    // Notes typed in the FERMA column are kept per task id in localStorage,
+    // so they survive a page reload. Only edited tasks are stored; anything
+    // untouched keeps the default text shipped in TASKS.
+    const NOTES_KEY = 'FERMA_TASK_NOTES';
+
+    function loadNotes() {
+      try {
+        const raw = localStorage.getItem(NOTES_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        tasks.forEach(t => {
+          if (Object.prototype.hasOwnProperty.call(saved, t.id)) t.ferma = saved[t.id];
+        });
+      } catch (e) {
+        console.warn('Could not read saved FERMA notes:', e);
+      }
+    }
+
+    function saveNote(taskId, value) {
+      try {
+        const raw = localStorage.getItem(NOTES_KEY);
+        const saved = raw ? JSON.parse(raw) : {};
+        saved[taskId] = value;
+        localStorage.setItem(NOTES_KEY, JSON.stringify(saved));
+      } catch (e) {
+        console.warn('Could not save FERMA note:', e);
+      }
+    }
+
+    loadNotes();
+
+    // ── Calendar → task matching ───────────────────────────────────────
+    // Calendar events arrive as free text ("FRM - Event Programme v2"), so we
+    // normalise both sides before comparing: lowercase, accents stripped,
+    // "&" spelled out, everything else collapsed to single spaces.
+    // Hours are summed from calendar durations, so keep one decimal to avoid
+    // 3.9999999h showing up in the table.
+    const round1 = n => Math.round(n * 10) / 10;
+
+    function normalizeName(s) {
+      return (s || '')
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/&/g, ' and ')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+    }
+
+    // ── Manual entry → task overrides ──────────────────────────────────
+    // Calendar titles are written by hand and rarely match a deliverable
+    // exactly (">Forum Harbour", "Catch-up delivery FERMA HARBOUR"). Rather
+    // than guess, unrecognised titles can be assigned by hand. The choice is
+    // keyed on the normalised title, so assigning it once also covers every
+    // future event with that same title.
+    const ENTRY_MAP_KEY = 'FERMA_ENTRY_TASK_MAP';
+
+    function loadEntryMap() {
+      try {
+        const raw = localStorage.getItem(ENTRY_MAP_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        console.warn('Could not read entry map:', e);
+        return {};
+      }
+    }
+
+    function setEntryOverride(normTitle, taskId) {
+      try {
+        const map = loadEntryMap();
+        if (taskId == null) delete map[normTitle];
+        else map[normTitle] = taskId;
+        localStorage.setItem(ENTRY_MAP_KEY, JSON.stringify(map));
+      } catch (e) {
+        console.warn('Could not save entry map:', e);
+      }
+    }
+
+    // Maps every calendar entry onto a task and sums the hours.
+    // Returns { byTask: {taskId: hours}, matchOf: {entryIndex: taskId}, unmatched: [...] }.
+    // Anything that cannot be matched is reported rather than dropped, so the
+    // budget figures are never silently wrong.
+    function computeTracked() {
+      const byTask = {};
+      const matchOf = {};
+      const unmatched = [];
+      const overrides = loadEntryMap();
+
+      const candidates = tasks
+        .map(t => ({ id: t.id, norm: normalizeName(t.name) }))
+        .filter(c => c.norm);
+      const longestFirst = candidates.slice().sort((a, b) => b.norm.length - a.norm.length);
+      const shortestFirst = candidates.slice().sort((a, b) => a.norm.length - b.norm.length);
+
+      timeEntries.forEach((entry, i) => {
+        const hours = Number(entry.hours) || 0;
+        const normTitle = normalizeName(entry.taskName);
+        let matchId = null;
+
+        if (Object.prototype.hasOwnProperty.call(overrides, normTitle)) {
+          // A hand-made assignment always wins over the automatic guess.
+          const id = overrides[normTitle];
+          if (tasks.some(t => t.id === id)) matchId = id;
+        } else if (entry.taskId != null && tasks.some(t => t.id === entry.taskId)) {
+          matchId = entry.taskId;
+        } else {
+          const norm = normTitle;
+          if (norm) {
+            const exact = candidates.find(c => c.norm === norm);
+            if (exact) {
+              matchId = exact.id;
+            } else {
+              // Event title carries the full task name plus extra words.
+              // Longest task first, so "Project Management (Coordination)"
+              // wins over the shorter "Project Management".
+              const contained = longestFirst.find(c => norm.includes(c.norm));
+              if (contained) {
+                matchId = contained.id;
+              } else if (norm.length >= 8) {
+                // Event title is a shortened form of the task name. Take the
+                // tightest fit; short titles are ignored as too ambiguous.
+                const container = shortestFirst.find(c => c.norm.includes(norm));
+                if (container) matchId = container.id;
+              }
+            }
+          }
+        }
+
+        if (matchId == null) {
+          unmatched.push(entry);
+        } else {
+          matchOf[i] = matchId;
+          byTask[matchId] = (byTask[matchId] || 0) + hours;
+        }
+      });
+
+      return { byTask, matchOf, unmatched };
+    }
+
     function toast(m) {
       const t = $("#toast");
       t.textContent = m;
@@ -948,6 +1107,10 @@
     }
 
     function renderStats() {
+      const { byTask: trackedByTask, unmatched } = computeTracked();
+      const trackedTotal = tasks.reduce((s, t) => s + (trackedByTask[t.id] || 0), 0);
+      const trackedTaskCount = tasks.filter(t => (trackedByTask[t.id] || 0) > 0).length;
+
       const approved = tasks.filter(t => t.section === "approved");
       const newRealloc = tasks.filter(t => t.section === "new-realloc");
 
@@ -996,6 +1159,11 @@
             <div class="stat-desc">${newBudgetHours}h @ €85/h not covered by reallocation</div>
           </div>
           <div class="stat-box">
+            <div class="stat-label">Tracked, Not Invoiced</div>
+            <div class="stat-value" style="color: var(--c-tracked);">${round1(trackedTotal)}h</div>
+            <div class="stat-desc">${trackedTaskCount ? `From Google Calendar (last 30 days), across ${trackedTaskCount} task${trackedTaskCount === 1 ? '' : 's'}. Already deducted from the hours left on each line; amounts below are unchanged until invoiced.` : 'No calendar hours matched to a task yet.'}${unmatched.length ? ` <span style="color: var(--c-over);">${unmatched.length} entr${unmatched.length === 1 ? 'y' : 'ies'} unmatched — see timesheet.</span>` : ''}</div>
+          </div>
+          <div class="stat-box">
             <div class="stat-label">Total Project Value</div>
             <div class="stat-value">€${Math.round(totalAmountInvoiced + originalPending + newBudgetAmount).toLocaleString('it-IT')}</div>
             <div class="stat-desc">€${totalAmountInvoiced.toLocaleString('it-IT')} invoiced • €${Math.round(originalPending).toLocaleString('it-IT')} pending (approved) • €${Math.round(newBudgetAmount).toLocaleString('it-IT')} to approve</div>
@@ -1005,6 +1173,7 @@
     }
 
     function renderTable() {
+      const { byTask: trackedByTask } = computeTracked();
       const match = t => !term || t.name.toLowerCase().includes(term.toLowerCase());
       let filtered = tasks.filter(match);
 
@@ -1051,21 +1220,36 @@
 
         sectionTasks.forEach(t => {
           const status = statusOf(t.status);
-          const progressPercent = t.budgetHours > 0 ? Math.round((t.invoicedHours / t.budgetHours) * 100) : 0;
+
+          // Hours logged in the calendar eat into the budget on top of what
+          // has already been invoiced, so the remaining figure nets out both.
+          const tracked = trackedByTask[t.id] || 0;
+          const consumed = t.invoicedHours + tracked;
+          const remaining = round1(t.budgetHours - consumed);
+
+          const invoicedPercent = t.budgetHours > 0 ? (t.invoicedHours / t.budgetHours) * 100 : 0;
+          const trackedPercent = t.budgetHours > 0 ? (tracked / t.budgetHours) * 100 : 0;
+          // The two segments share the bar, so cap their sum at 100%.
+          const invoicedWidth = Math.min(invoicedPercent, 100);
+          const trackedWidth = Math.min(trackedPercent, 100 - invoicedWidth);
 
           html += '<tr data-task-id="' + t.id + '">' +
             '<td><span class="task-name">' + t.name + '</span></td>' +
             '<td>' +
             '<div class="hours-cell">' +
             '<div class="hours-numbers">' +
-            '<span class="hours-budget">' + t.invoicedHours + '/' + t.budgetHours + 'h</span>' +
-            '<span class="hours-remaining' + (t.remainingHours < 0 ? ' over' : '') + '">' +
-            (t.remainingHours >= 0 ? '✓ ' : '✗ ') + Math.abs(t.remainingHours) + 'h ' +
-            (t.remainingHours >= 0 ? 'left' : 'over') +
+            '<span class="hours-budget">' + round1(consumed) + '/' + t.budgetHours + 'h</span>' +
+            (tracked > 0
+              ? '<span class="hours-tracked" title="Logged in Google Calendar in the last 30 days, not yet invoiced">◷ ' + round1(tracked) + 'h tracked</span>'
+              : '') +
+            '<span class="hours-remaining' + (remaining < 0 ? ' over' : '') + '">' +
+            (remaining >= 0 ? '✓ ' : '✗ ') + Math.abs(remaining) + 'h ' +
+            (remaining >= 0 ? 'left' : 'over') +
             '</span>' +
             '</div>' +
-            '<div class="hours-progress">' +
-            '<div class="hours-progress-fill" style="width: ' + Math.min(progressPercent, 100) + '%"></div>' +
+            '<div class="hours-progress" title="' + t.invoicedHours + 'h invoiced' + (tracked > 0 ? ' + ' + round1(tracked) + 'h tracked' : '') + ' of ' + t.budgetHours + 'h">' +
+            '<div class="hours-progress-fill" style="width: ' + invoicedWidth + '%"></div>' +
+            '<div class="hours-progress-tracked" style="width: ' + trackedWidth + '%"></div>' +
             '</div>' +
             '</div>' +
             '</td>' +
@@ -1081,12 +1265,15 @@
 
         // Add totals row
         const totalInvoiced = sectionTasks.reduce((s, t) => s + t.invoicedHours, 0);
+        const totalTracked = sectionTasks.reduce((s, t) => s + (trackedByTask[t.id] || 0), 0);
         const totalBudget = sectionTasks.reduce((s, t) => s + t.budgetHours, 0);
         const totalAmount = sectionTasks.reduce((s, t) => s + t.amountInvoiced + t.amountRemaining, 0);
 
         html += '<tr style="background: var(--panel-2); font-weight: 600; border-top: 2px solid var(--line);">' +
           '<td style="color: var(--orange);">TOTAL</td>' +
-          '<td style="color: var(--orange);">' + totalInvoiced + '/' + totalBudget + 'h</td>' +
+          '<td style="color: var(--orange);">' + round1(totalInvoiced + totalTracked) + '/' + totalBudget + 'h' +
+          (totalTracked > 0 ? '<span class="hours-tracked" style="display: block; font-weight: 500;">incl. ' + round1(totalTracked) + 'h tracked</span>' : '') +
+          '</td>' +
           '<td></td>' +
           '<td style="color: var(--text);">€' + Math.round(totalAmount) + '</td>' +
           '<td></td>' +
@@ -1100,7 +1287,9 @@
       function attachFermaEditors() {
         document.querySelectorAll('.ferma-cell').forEach(cell => {
           cell.addEventListener('dblclick', function() {
-            const taskId = parseInt(this.dataset.taskId);
+            // Number(), not parseInt(): task id 3.5 would become 3 and the
+            // note would be written onto a different deliverable.
+            const taskId = Number(this.dataset.taskId);
             const task = tasks.find(t => t.id === taskId);
             if (!task) return;
 
@@ -1111,8 +1300,12 @@
             input.style.cssText = 'width: 100%; padding: 4px 8px; background: var(--panel); border: 1px solid var(--orange); color: var(--text); border-radius: 4px; font-size: 11px;';
 
             const span = this;
+            let saved = false;
             const saveEdit = () => {
+              if (saved) return;   // blur also fires after Enter
+              saved = true;
               task.ferma = input.value;
+              saveNote(task.id, task.ferma);
               span.textContent = task.ferma || '';
               input.replaceWith(span);
               attachFermaEditors();
@@ -1151,6 +1344,17 @@
       // Refresh button handler
       const refreshBtn = document.getElementById('refreshTimesheet');
       if (refreshBtn) refreshBtn.addEventListener('click', refreshTimesheet);
+
+      // Entry → task assignment handlers
+      document.querySelectorAll('select.entry-map').forEach(sel => {
+        sel.addEventListener('change', function() {
+          // Number(), not parseInt(): one task id is 3.5 and would be
+          // truncated to 3, silently charging the hours to another task.
+          const taskId = this.value === '' ? null : Number(this.value);
+          setEntryOverride(this.dataset.norm, taskId);
+          render();
+        });
+      });
 
       // Change endpoint handler
       const changeLink = document.getElementById('changeEndpoint');
@@ -1230,33 +1434,18 @@
         });
     }
 
-    function getTimeEntriesForTask(taskId) {
-      return timeEntries.filter(e => {
-        if (e.taskId === taskId) return true;
-        const task = tasks.find(t => t.id === taskId);
-        if (!task) return false;
-        return e.taskName && task.name && e.taskName.toLowerCase().includes(task.name.toLowerCase());
-      });
-    }
-
     function renderTimesheet() {
-      // Sort entries by date (newest first)
-      const sortedEntries = [...timeEntries].sort((a, b) => new Date(b.date) - new Date(a.date));
+      const { matchOf, unmatched } = computeTracked();
 
-      // Group entries by task name
-      const entriesByTask = {};
-      let totalAllHours = 0;
+      // Keep the original index alongside each entry so we can look up which
+      // task it was matched to, then sort by date (newest first).
+      const sortedEntries = timeEntries
+        .map((entry, i) => ({ entry, matchedId: matchOf[i] }))
+        .sort((a, b) => new Date(b.entry.date) - new Date(a.entry.date));
 
-      sortedEntries.forEach(entry => {
-        const taskName = entry.taskName || 'Unknown Task';
-        if (!entriesByTask[taskName]) {
-          entriesByTask[taskName] = { entries: [], totalHours: 0 };
-        }
-        const hours = entry.hours || 0;
-        entriesByTask[taskName].entries.push(entry);
-        entriesByTask[taskName].totalHours += hours;
-        totalAllHours += hours;
-      });
+      const totalAllHours = round1(
+        timeEntries.reduce((s, e) => s + (Number(e.hours) || 0), 0)
+      );
 
       let html = '<div class="timesheet-section"><h3 style="margin-bottom: 16px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">⏱ TIME TRACKING (Last 30 Days)</h3>';
       html += '<div style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center;">';
@@ -1268,16 +1457,40 @@
       if (timeEntries.length === 0) {
         html += '<p style="color: var(--muted); font-size: 12px;">No FRM time entries in the last 30 days. Click "Sync from Google Calendar" to import events.</p>';
       } else {
-        html += '<div class="timesheet-table"><table style="width: 100%; border-collapse: collapse; font-size: 12px;">';
-        html += '<tr style="border-bottom: 1px solid var(--line);"><th style="text-align: left; padding: 8px; color: var(--muted); font-weight: 500;">Date</th><th style="text-align: left; padding: 8px; color: var(--muted); font-weight: 500;">Task</th><th style="text-align: right; padding: 8px; color: var(--muted); font-weight: 500;">Hours</th></tr>';
+        if (unmatched.length) {
+          html += '<p style="font-size: 12px; color: var(--c-over); background: rgba(236, 72, 153, 0.08); border: 1px solid var(--c-over); border-radius: 6px; padding: 10px 12px; margin-bottom: 14px;">⚠ ' +
+            unmatched.length + ' calendar entr' + (unmatched.length === 1 ? 'y is' : 'ies are') +
+            ' not assigned to a task, so ' + (unmatched.length === 1 ? 'its' : 'their') +
+            ' hours are <strong>not</strong> deducted from any budget. Pick the right deliverable in the “Deducted From” column — the choice is remembered for every future event with the same title.</p>';
+        }
 
-        // Show entries sorted by date (newest first)
-        sortedEntries.forEach(entry => {
-          html += '<tr style="border-bottom: 1px solid var(--line);"><td style="padding: 8px; color: var(--muted); font-size: 11px;">' + entry.date + '</td><td style="padding: 8px; color: var(--text);">' + entry.taskName + '</td><td style="text-align: right; padding: 8px; color: var(--orange);">' + entry.hours + 'h</td></tr>';
+        html += '<div class="timesheet-table"><table style="width: 100%; border-collapse: collapse; font-size: 12px;">';
+        html += '<tr style="border-bottom: 1px solid var(--line);"><th style="text-align: left; padding: 8px; color: var(--muted); font-weight: 500;">Date</th><th style="text-align: left; padding: 8px; color: var(--muted); font-weight: 500;">Calendar Entry</th><th style="text-align: left; padding: 8px; color: var(--muted); font-weight: 500;">Deducted From</th><th style="text-align: right; padding: 8px; color: var(--muted); font-weight: 500;">Hours</th></tr>';
+
+        // Show entries sorted by date (newest first). The target task is a
+        // dropdown so a title the matcher could not place can be assigned by
+        // hand — the choice sticks for every event with the same title.
+        sortedEntries.forEach(({ entry, matchedId }) => {
+          const normTitle = normalizeName(entry.taskName);
+          const options = ['<option value=""' + (matchedId == null ? ' selected' : '') + '>— not counted —</option>']
+            .concat(tasks.map(t =>
+              '<option value="' + t.id + '"' + (t.id === matchedId ? ' selected' : '') + '>' + t.name + '</option>'
+            )).join('');
+
+          html += '<tr style="border-bottom: 1px solid var(--line);">' +
+            '<td style="padding: 8px; color: var(--muted); font-size: 11px;">' + entry.date + '</td>' +
+            '<td style="padding: 8px; color: var(--text);">' + entry.taskName + '</td>' +
+            '<td style="padding: 8px;">' +
+            '<select class="entry-map" data-norm="' + normTitle.replace(/"/g, '&quot;') + '" ' +
+            'style="width: 100%; max-width: 260px; padding: 4px 6px; font-size: 11px; border-radius: 4px; background: var(--panel); color: ' +
+            (matchedId == null ? 'var(--c-over)' : 'var(--c-tracked)') + '; border: 1px solid ' +
+            (matchedId == null ? 'var(--c-over)' : 'var(--line)') + ';">' + options + '</select>' +
+            '</td>' +
+            '<td style="text-align: right; padding: 8px; color: var(--orange);">' + entry.hours + 'h</td></tr>';
         });
 
         // Show grand total
-        html += '<tr style="background: var(--panel-2); font-weight: 600; border-top: 2px solid var(--line);"><td style="padding: 8px;"></td><td style="padding: 8px; color: var(--text);">TOTAL (Last 30 Days)</td><td style="text-align: right; padding: 8px; color: var(--orange);">' + totalAllHours + 'h</td></tr>';
+        html += '<tr style="background: var(--panel-2); font-weight: 600; border-top: 2px solid var(--line);"><td style="padding: 8px;"></td><td style="padding: 8px; color: var(--text);">TOTAL (Last 30 Days)</td><td style="padding: 8px;"></td><td style="text-align: right; padding: 8px; color: var(--orange);">' + totalAllHours + 'h</td></tr>';
         html += '</table></div>';
       }
       html += '</div>';
@@ -1296,6 +1509,7 @@
         .then(data => {
           if (data.success && data.events) {
             timeEntries = data.events;
+            render();   // the first render ran before this resolved
           }
         })
         .catch(e => console.log('Calendar sync skipped - URL not configured'));
