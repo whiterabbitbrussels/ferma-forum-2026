@@ -1276,14 +1276,8 @@
           html += '<tr style="border-bottom: 1px solid var(--line);"><td style="padding: 8px; color: var(--muted); font-size: 11px;">' + entry.date + '</td><td style="padding: 8px; color: var(--text);">' + entry.taskName + '</td><td style="text-align: right; padding: 8px; color: var(--orange);">' + entry.hours + 'h</td></tr>';
         });
 
-        // Show totals by task
-        html += '<tr style="background: var(--panel-2); border-top: 2px solid var(--line); font-weight: 600;"><td colspan="2" style="padding: 8px; color: var(--text);">TOTAL BY TASK</td><td style="padding: 8px;"></td></tr>';
-        Object.keys(entriesByTask).sort().forEach(taskName => {
-          const taskData = entriesByTask[taskName];
-          html += '<tr style="border-bottom: 1px solid var(--line); background: rgba(255,255,255,0.01);"><td style="padding: 8px;"></td><td style="padding: 8px; color: var(--text); font-size: 11px;">' + taskName + '</td><td style="text-align: right; padding: 8px; color: var(--orange);">' + taskData.totalHours + 'h</td></tr>';
-        });
-
-        html += '<tr style="background: var(--panel-2); font-weight: 600; border-top: 1px solid var(--line);"><td style="padding: 8px;"></td><td style="padding: 8px; color: var(--text);">GRAND TOTAL</td><td style="text-align: right; padding: 8px; color: var(--orange);">' + totalAllHours + 'h</td></tr>';
+        // Show grand total
+        html += '<tr style="background: var(--panel-2); font-weight: 600; border-top: 2px solid var(--line);"><td style="padding: 8px;"></td><td style="padding: 8px; color: var(--text);">TOTAL (Last 30 Days)</td><td style="text-align: right; padding: 8px; color: var(--orange);">' + totalAllHours + 'h</td></tr>';
         html += '</table></div>';
       }
       html += '</div>';
