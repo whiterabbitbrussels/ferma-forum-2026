@@ -962,6 +962,11 @@
     // 3.9999999h showing up in the table.
     const round1 = n => Math.round(n * 10) / 10;
 
+    // Calendar hours are only ever charged against New Production. The First
+    // Estimation lines are closed work, billed on the approved figures, so
+    // time logged today must not eat into them.
+    const trackableTasks = () => tasks.filter(t => t.section === 'new-realloc');
+
     function normalizeName(s) {
       return (s || '')
         .toLowerCase()
@@ -1010,7 +1015,11 @@
       const unmatched = [];
       const overrides = loadEntryMap();
 
-      const candidates = tasks
+      // Only New Production lines can absorb calendar hours — see trackableTasks().
+      const trackable = trackableTasks();
+      const isTrackable = id => trackable.some(t => t.id === id);
+
+      const candidates = trackable
         .map(t => ({ id: t.id, norm: normalizeName(t.name) }))
         .filter(c => c.norm);
       const longestFirst = candidates.slice().sort((a, b) => b.norm.length - a.norm.length);
@@ -1024,8 +1033,8 @@
         if (Object.prototype.hasOwnProperty.call(overrides, normTitle)) {
           // A hand-made assignment always wins over the automatic guess.
           const id = overrides[normTitle];
-          if (tasks.some(t => t.id === id)) matchId = id;
-        } else if (entry.taskId != null && tasks.some(t => t.id === entry.taskId)) {
+          if (isTrackable(id)) matchId = id;
+        } else if (entry.taskId != null && isTrackable(entry.taskId)) {
           matchId = entry.taskId;
         } else {
           const norm = normTitle;
@@ -1161,7 +1170,7 @@
           <div class="stat-box">
             <div class="stat-label">Tracked, Not Invoiced</div>
             <div class="stat-value" style="color: var(--c-tracked);">${round1(trackedTotal)}h</div>
-            <div class="stat-desc">${trackedTaskCount ? `From Google Calendar (last 30 days), across ${trackedTaskCount} task${trackedTaskCount === 1 ? '' : 's'}. Already deducted from the hours left on each line; amounts below are unchanged until invoiced.` : 'No calendar hours matched to a task yet.'}${unmatched.length ? ` <span style="color: var(--c-over);">${unmatched.length} entr${unmatched.length === 1 ? 'y' : 'ies'} unmatched — see timesheet.</span>` : ''}</div>
+            <div class="stat-desc">${trackedTaskCount ? `From Google Calendar (last 30 days), across ${trackedTaskCount} New Production task${trackedTaskCount === 1 ? '' : 's'}. Already deducted from the hours left on each line; amounts below are unchanged until invoiced. First Estimation is never touched.` : 'No calendar hours assigned to a New Production task yet.'}${unmatched.length ? ` <span style="color: var(--c-over);">${unmatched.length} entr${unmatched.length === 1 ? 'y' : 'ies'} unassigned — see timesheet.</span>` : ''}</div>
           </div>
           <div class="stat-box">
             <div class="stat-label">Total Project Value</div>
@@ -1461,7 +1470,7 @@
           html += '<p style="font-size: 12px; color: var(--c-over); background: rgba(236, 72, 153, 0.08); border: 1px solid var(--c-over); border-radius: 6px; padding: 10px 12px; margin-bottom: 14px;">⚠ ' +
             unmatched.length + ' calendar entr' + (unmatched.length === 1 ? 'y is' : 'ies are') +
             ' not assigned to a task, so ' + (unmatched.length === 1 ? 'its' : 'their') +
-            ' hours are <strong>not</strong> deducted from any budget. Pick the right deliverable in the “Deducted From” column — the choice is remembered for every future event with the same title.</p>';
+            ' hours are <strong>not</strong> deducted from any budget. Pick the right deliverable in the “Deducted From” column — the choice is remembered for every future event with the same title. Only <strong>New Production</strong> deliverables can be selected; First Estimation hours are closed and never touched.</p>';
         }
 
         html += '<div class="timesheet-table"><table style="width: 100%; border-collapse: collapse; font-size: 12px;">';
@@ -1472,8 +1481,9 @@
         // hand — the choice sticks for every event with the same title.
         sortedEntries.forEach(({ entry, matchedId }) => {
           const normTitle = normalizeName(entry.taskName);
+          // New Production deliverables only — First Estimation is closed work.
           const options = ['<option value=""' + (matchedId == null ? ' selected' : '') + '>— not counted —</option>']
-            .concat(tasks.map(t =>
+            .concat(trackableTasks().map(t =>
               '<option value="' + t.id + '"' + (t.id === matchedId ? ' selected' : '') + '>' + t.name + '</option>'
             )).join('');
 
