@@ -35,7 +35,7 @@ function doGet(e) {
 
       return {
         taskName: taskName || title,
-        date: Utilities.formatDate(now, 'GMT', 'yyyy-MM-dd'),
+        date: Utilities.formatDate(startTime, 'GMT', 'yyyy-MM-dd'),
         hours: Math.round(hours * 10) / 10, // Round to 1 decimal
         description: description,
         startTime: Utilities.formatDate(startTime, 'GMT', 'HH:mm'),
