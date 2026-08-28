@@ -1220,6 +1220,7 @@
         html += '<div class="table-wrap"><table>' +
           '<thead><tr>' +
           '<th style="min-width: 280px">Deliverable / Task</th>' +
+          '<th style="min-width: 120px">Execution Date</th>' +
           '<th style="min-width: 200px">Hours</th>' +
           '<th style="min-width: 120px">Hourly Rate</th>' +
           '<th style="min-width: 200px">Amount (excl. VAT)</th>' +
@@ -1244,6 +1245,7 @@
 
           html += '<tr data-task-id="' + t.id + '">' +
             '<td><span class="task-name">' + t.name + '</span></td>' +
+            '<td style="font-size: 12px; color: var(--muted); text-align: center;">' + (t.executionDate || '—') + '</td>' +
             '<td>' +
             '<div class="hours-cell">' +
             '<div class="hours-numbers">' +
