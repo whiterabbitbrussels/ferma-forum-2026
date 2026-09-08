@@ -1399,8 +1399,9 @@
 
     let timeEntries = [];
     // 🔗 Google Apps Script Deployment URL (optional - for auto-sync)
-    // NOTE: every "New deployment" in Apps Script creates a NEW URL — update this constant after each deploy.
-    const GOOGLE_CALENDAR_SYNC_URL = 'https://script.google.com/macros/s/AKfycbySMdu5iNFgJya0ix46e71vU0ywyPG7SxR7ZvVbCtFoYlPyRpVAstKOKI-hAwLTTBr9/exec';
+    // Same-origin Vercel function (see api/calendar.js) that proxies the Google
+    // Apps Script. The Apps Script URL lives there — update it there after a redeploy.
+    const GOOGLE_CALENDAR_SYNC_URL = '/api/calendar';
 
     function render() {
       renderNav();
@@ -1438,8 +1439,13 @@
     // The endpoint is fixed (see GOOGLE_CALENDAR_SYNC_URL) — no prompt, no
     // localStorage: a stale saved URL was silently pointing at an old deploy.
     function syncFromGoogleCalendar() {
-      fetch(GOOGLE_CALENDAR_SYNC_URL)
-        .then(r => r.json())
+      fetch(GOOGLE_CALENDAR_SYNC_URL, { cache: 'no-store' })
+        .then(r => r.text().then(text => {
+          // Parse by hand so a bad body yields a readable error instead of
+          // Safari's generic "The string did not match the expected pattern".
+          try { return JSON.parse(text); }
+          catch (_) { throw new Error('HTTP ' + r.status + ', non-JSON body: ' + text.slice(0, 80)); }
+        }))
         .then(data => {
           if (!data.success) throw new Error(data.error || 'sync failed');
           timeEntries = data.events || [];
