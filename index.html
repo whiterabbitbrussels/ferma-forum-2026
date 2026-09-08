@@ -1170,7 +1170,7 @@
           <div class="stat-box">
             <div class="stat-label">Tracked, Not Invoiced</div>
             <div class="stat-value" style="color: var(--c-tracked);">${round1(trackedTotal)}h</div>
-            <div class="stat-desc">${trackedTaskCount ? `From Google Calendar (last 30 days), across ${trackedTaskCount} New Production task${trackedTaskCount === 1 ? '' : 's'}. Already deducted from the hours left on each line; amounts below are unchanged until invoiced. First Estimation is never touched.` : 'No calendar hours assigned to a New Production task yet.'}${unmatched.length ? ` <span style="color: var(--c-over);">${unmatched.length} entr${unmatched.length === 1 ? 'y' : 'ies'} unassigned — see timesheet.</span>` : ''}</div>
+            <div class="stat-desc">${trackedTaskCount ? `From Google Calendar (from July 22 onwards), across ${trackedTaskCount} New Production task${trackedTaskCount === 1 ? '' : 's'}. Already deducted from the hours left on each line; amounts below are unchanged until invoiced. First Estimation is never touched.` : 'No calendar hours assigned to a New Production task yet.'}${unmatched.length ? ` <span style="color: var(--c-over);">${unmatched.length} entr${unmatched.length === 1 ? 'y' : 'ies'} unassigned — see timesheet.</span>` : ''}</div>
           </div>
           <div class="stat-box">
             <div class="stat-label">Total Project Value</div>
@@ -1251,7 +1251,7 @@
             '<div class="hours-numbers">' +
             '<span class="hours-budget">' + round1(consumed) + '/' + t.budgetHours + 'h</span>' +
             (tracked > 0
-              ? '<span class="hours-tracked" title="Logged in Google Calendar in the last 30 days, not yet invoiced">◷ ' + round1(tracked) + 'h tracked</span>'
+              ? '<span class="hours-tracked" title="Logged in Google Calendar from July 22 onwards, not yet invoiced">◷ ' + round1(tracked) + 'h tracked</span>'
               : '') +
             '<span class="hours-remaining' + (remaining < 0 ? ' over' : '') + '">' +
             (remaining >= 0 ? '✓ ' : '✗ ') + Math.abs(remaining) + 'h ' +
@@ -1458,7 +1458,7 @@
         timeEntries.reduce((s, e) => s + (Number(e.hours) || 0), 0)
       );
 
-      let html = '<div class="timesheet-section"><h3 style="margin-bottom: 16px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">⏱ TIME TRACKING (Last 30 Days)</h3>';
+      let html = '<div class="timesheet-section"><h3 style="margin-bottom: 16px; font-size: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">⏱ TIME TRACKING (From July 22 Onwards)</h3>';
       html += '<div style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center;">';
       html += '<button id="syncCalendar" style="padding: 8px 14px; background: var(--orange); color: var(--bg); border: none; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">↻ Sync from Google Calendar</button>';
       html += '<button id="refreshTimesheet" style="padding: 8px 14px; background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">⟳ Refresh</button>';
@@ -1466,7 +1466,7 @@
       html += '</div>';
 
       if (timeEntries.length === 0) {
-        html += '<p style="color: var(--muted); font-size: 12px;">No FRM time entries in the last 30 days. Click "Sync from Google Calendar" to import events.</p>';
+        html += '<p style="color: var(--muted); font-size: 12px;">No FRM time entries from July 22 onwards. Click "Sync from Google Calendar" to import events.</p>';
       } else {
         if (unmatched.length) {
           html += '<p style="font-size: 12px; color: var(--c-over); background: rgba(236, 72, 153, 0.08); border: 1px solid var(--c-over); border-radius: 6px; padding: 10px 12px; margin-bottom: 14px;">⚠ ' +
@@ -1502,7 +1502,7 @@
         });
 
         // Show grand total
-        html += '<tr style="background: var(--panel-2); font-weight: 600; border-top: 2px solid var(--line);"><td style="padding: 8px;"></td><td style="padding: 8px; color: var(--text);">TOTAL (Last 30 Days)</td><td style="padding: 8px;"></td><td style="text-align: right; padding: 8px; color: var(--orange);">' + totalAllHours + 'h</td></tr>';
+        html += '<tr style="background: var(--panel-2); font-weight: 600; border-top: 2px solid var(--line);"><td style="padding: 8px;"></td><td style="padding: 8px; color: var(--text);">TOTAL (From July 22 Onwards)</td><td style="padding: 8px;"></td><td style="text-align: right; padding: 8px; color: var(--orange);">' + totalAllHours + 'h</td></tr>';
         html += '</table></div>';
       }
       html += '</div>';
