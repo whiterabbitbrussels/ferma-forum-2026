@@ -306,6 +306,42 @@
       transition: width 0.3s ease;
     }
 
+    /* ===== COLLAPSIBLE SECTIONS ===== */
+    details.section {
+      margin: 30px 0 20px;
+    }
+
+    details.section > summary {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+      margin-bottom: 8px;
+    }
+
+    details.section > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details.section .chev {
+      display: inline-block;
+      color: var(--muted);
+      font-size: 14px;
+      transition: transform 0.15s;
+    }
+
+    details.section[open] .chev {
+      transform: rotate(90deg);
+    }
+
+    details.section .section-desc {
+      margin: 0 0 16px 28px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
     /* ===== TABLE ===== */
     .table-wrap {
       overflow-x: auto;
@@ -918,6 +954,10 @@
     let tasks = [...TASKS];
     let view = "all";
     let term = "";
+    // Which table sections are expanded. Kept here (not in the DOM) because
+    // render() rebuilds the whole content, which would otherwise snap
+    // First Estimation shut every time a note or dropdown changes.
+    const openSections = { "new-realloc": true, "approved": false };
 
     const $ = s => document.querySelector(s);
     const statusOf = k => STATUSES.find(s => s.key === k);
@@ -1226,13 +1266,15 @@
         const sectionBudget = sectionTasks.reduce((s, t) => s + t.budgetHours, 0);
         const sectionAmount = sectionTasks.reduce((s, t) => s + t.amountRemaining, 0);
 
-        html += `<div style="margin: 30px 0 20px 0;">
-          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+        // A search must not hide its own results inside a collapsed section.
+        const isOpen = term ? true : openSections[section.key];
+        html += `<details class="section" data-section="${section.key}"${isOpen ? ' open' : ''}>
+          <summary>
+            <span class="chev">▶</span>
             <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text);">${section.title}</h3>
             <span style="background: var(--orange); color: #1a0d04; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;">${sectionBudget}h</span>
-          </div>
-          <p style="margin: 0 0 16px 0; font-size: 12px; color: var(--muted);">${section.desc}</p>
-        </div>`;
+          </summary>
+          <p class="section-desc">${section.desc}</p>`;
 
         html += '<div class="table-wrap"><table>' +
           '<thead><tr>' +
@@ -1308,7 +1350,7 @@
           '<td></td>' +
           '</tr>';
 
-        html += '</tbody></table></div>';
+        html += '</tbody></table></div></details>';
       });
 
       // Attach edit handlers after rendering
@@ -1373,6 +1415,12 @@
       // Refresh button handler
       const refreshBtn = document.getElementById('refreshTimesheet');
       if (refreshBtn) refreshBtn.addEventListener('click', refreshTimesheet);
+
+      // Remember expanded/collapsed sections across re-renders
+      document.querySelectorAll('details.section').forEach(d => {
+        // Skip while searching: that open state is forced, not the user's choice.
+        d.addEventListener('toggle', () => { if (!term) openSections[d.dataset.section] = d.open; });
+      });
 
       // Entry → task assignment handlers
       document.querySelectorAll('select.entry-map').forEach(sel => {
