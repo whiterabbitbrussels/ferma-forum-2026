@@ -962,6 +962,12 @@
     // 3.9999999h showing up in the table.
     const round1 = n => Math.round(n * 10) / 10;
 
+    // Calendar dates arrive as ISO "yyyy-MM-dd"; show them European style.
+    const fmtEU = iso => {
+      const [y, m, d] = String(iso || '').split('-');
+      return y && m && d ? d + '/' + m + '/' + y : (iso || '—');
+    };
+
     // Calendar hours are only ever charged against New Production. The First
     // Estimation lines are closed work, billed on the approved figures, so
     // time logged today must not eat into them.
@@ -1011,6 +1017,7 @@
     // budget figures are never silently wrong.
     function computeTracked() {
       const byTask = {};
+      const datesByTask = {};   // taskId -> [ISO dates of matched calendar entries]
       const matchOf = {};
       const unmatched = [];
       const overrides = loadEntryMap();
@@ -1064,10 +1071,11 @@
         } else {
           matchOf[i] = matchId;
           byTask[matchId] = (byTask[matchId] || 0) + hours;
+          if (entry.date) (datesByTask[matchId] = datesByTask[matchId] || []).push(entry.date);
         }
       });
 
-      return { byTask, matchOf, unmatched };
+      return { byTask, datesByTask, matchOf, unmatched };
     }
 
     function toast(m) {
@@ -1182,7 +1190,16 @@
     }
 
     function renderTable() {
-      const { byTask: trackedByTask } = computeTracked();
+      const { byTask: trackedByTask, datesByTask } = computeTracked();
+
+      // Execution date = when the work was actually logged in the calendar.
+      // One day → "24/07/2026"; several → "24/07/2026 → 12/08/2026".
+      const executionDateOf = t => {
+        const dates = (datesByTask[t.id] || []).slice().sort();
+        if (!dates.length) return t.executionDate ? fmtEU(t.executionDate) : '—';
+        const first = dates[0], last = dates[dates.length - 1];
+        return first === last ? fmtEU(first) : fmtEU(first) + ' → ' + fmtEU(last);
+      };
       const match = t => !term || t.name.toLowerCase().includes(term.toLowerCase());
       let filtered = tasks.filter(match);
 
@@ -1245,7 +1262,7 @@
 
           html += '<tr data-task-id="' + t.id + '">' +
             '<td><span class="task-name">' + t.name + '</span></td>' +
-            '<td style="font-size: 12px; color: var(--muted); text-align: center;">' + (t.executionDate || '—') + '</td>' +
+            '<td style="font-size: 12px; color: var(--muted); text-align: center; white-space: nowrap;">' + executionDateOf(t) + '</td>' +
             '<td>' +
             '<div class="hours-cell">' +
             '<div class="hours-numbers">' +
@@ -1340,7 +1357,8 @@
 
     let timeEntries = [];
     // 🔗 Google Apps Script Deployment URL (optional - for auto-sync)
-    const GOOGLE_CALENDAR_SYNC_URL = 'https://script.google.com/macros/s/AKfycbzjiuZOr3uo9Lum7lHpQzn9CsAefPlfdZplxJ33BFSkhrsDU9AVkdcb4drVgDmf4t7B/exec';
+    // NOTE: every "New deployment" in Apps Script creates a NEW URL — update this constant after each deploy.
+    const GOOGLE_CALENDAR_SYNC_URL = 'https://script.google.com/macros/s/AKfycbySMdu5iNFgJya0ix46e71vU0ywyPG7SxR7ZvVbCtFoYlPyRpVAstKOKI-hAwLTTBr9/exec';
 
     function render() {
       renderNav();
@@ -1367,83 +1385,25 @@
         });
       });
 
-      // Change endpoint handler
-      const changeLink = document.getElementById('changeEndpoint');
-      if (changeLink) {
-        changeLink.addEventListener('click', (e) => {
-          e.preventDefault();
-          localStorage.removeItem('FERMA_CALENDAR_ENDPOINT');
-          syncFromGoogleCalendar();
-        });
-      }
     }
 
+    // The endpoint is fixed (see GOOGLE_CALENDAR_SYNC_URL) — no prompt, no
+    // localStorage: a stale saved URL was silently pointing at an old deploy.
     function syncFromGoogleCalendar() {
-      const savedEndpoint = localStorage.getItem('FERMA_CALENDAR_ENDPOINT');
-      let endpoint = savedEndpoint;
-
-      if (!endpoint) {
-        const calendarId = prompt('Enter your Google Calendar ID or URL (or press Cancel to manually paste events):\n\nFor automated sync, set up a webhook using n8n or Google Apps Script that posts events to an endpoint.');
-
-        if (calendarId === null) {
-          // Manual paste mode
-          const jsonStr = prompt('Paste your Google Calendar events as JSON:\n\nFormat: [{"taskName":"Task Name","date":"2026-08-12","hours":2,"description":"Notes"}]');
-          if (jsonStr) {
-            try {
-              const parsed = JSON.parse(jsonStr);
-              timeEntries = Array.isArray(parsed) ? parsed : [parsed];
-              render();
-              alert('Events imported successfully! Total entries: ' + timeEntries.length);
-            } catch (e) {
-              alert('Invalid JSON format. Please try again.');
-            }
-          }
-          return;
-        }
-
-        endpoint = calendarId.startsWith('http') ? calendarId : 'https://script.google.com/macros/d/' + calendarId + '/usercopy';
-      }
-
-      // Fetch from endpoint
-      if (endpoint && endpoint.trim()) {
-        fetch(endpoint)
-          .then(r => r.json())
-          .then(data => {
-            if (data.success && data.events) {
-              timeEntries = data.events;
-              localStorage.setItem('FERMA_CALENDAR_ENDPOINT', endpoint);
-              render();
-              alert('✓ Synced ' + timeEntries.length + ' events from Google Calendar');
-            }
-          })
-          .catch(e => {
-            console.error('Sync error:', e);
-            alert('Could not sync calendar. Make sure the endpoint is accessible.');
-          });
-      }
-    }
-
-    function refreshTimesheet() {
-      const endpoint = localStorage.getItem('FERMA_CALENDAR_ENDPOINT');
-      if (!endpoint) {
-        alert('No calendar endpoint saved. Click "Sync from Google Calendar" first.');
-        syncFromGoogleCalendar();
-        return;
-      }
-
-      fetch(endpoint)
+      fetch(GOOGLE_CALENDAR_SYNC_URL)
         .then(r => r.json())
         .then(data => {
-          if (data.success && data.events) {
-            timeEntries = data.events;
-            render();
-          }
+          if (!data.success) throw new Error(data.error || 'sync failed');
+          timeEntries = data.events || [];
+          render();
+          toast('✓ Synced ' + timeEntries.length + ' events from Google Calendar');
         })
         .catch(e => {
-          console.error('Refresh error:', e);
-          alert('Could not refresh. Check your internet connection.');
+          console.error('Sync error:', e);
+          toast('Could not sync calendar: ' + e.message);
         });
     }
+    const refreshTimesheet = syncFromGoogleCalendar;
 
     function renderTimesheet() {
       const { matchOf, unmatched } = computeTracked();
@@ -1462,7 +1422,6 @@
       html += '<div style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center;">';
       html += '<button id="syncCalendar" style="padding: 8px 14px; background: var(--orange); color: var(--bg); border: none; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">↻ Sync from Google Calendar</button>';
       html += '<button id="refreshTimesheet" style="padding: 8px 14px; background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">⟳ Refresh</button>';
-      html += '<a id="changeEndpoint" href="#" style="color: var(--orange-soft); font-size: 11px; text-decoration: none; margin-left: auto;">Change endpoint</a>';
       html += '</div>';
 
       if (timeEntries.length === 0) {
@@ -1490,7 +1449,7 @@
             )).join('');
 
           html += '<tr style="border-bottom: 1px solid var(--line);">' +
-            '<td style="padding: 8px; color: var(--muted); font-size: 11px;">' + entry.date + '</td>' +
+            '<td style="padding: 8px; color: var(--muted); font-size: 11px; white-space: nowrap;">' + fmtEU(entry.date) + '</td>' +
             '<td style="padding: 8px; color: var(--text);">' + entry.taskName + '</td>' +
             '<td style="padding: 8px;">' +
             '<select class="entry-map" data-norm="' + normTitle.replace(/"/g, '&quot;') + '" ' +
@@ -1514,20 +1473,8 @@
       render();
     };
 
-    // Auto-sync from Google Calendar if configured
-    if (GOOGLE_CALENDAR_SYNC_URL && GOOGLE_CALENDAR_SYNC_URL.trim()) {
-      fetch(GOOGLE_CALENDAR_SYNC_URL)
-        .then(r => r.json())
-        .then(data => {
-          if (data.success && data.events) {
-            timeEntries = data.events;
-            render();   // the first render ran before this resolved
-          }
-        })
-        .catch(e => console.log('Calendar sync skipped - URL not configured'));
-    }
-
     render();
+    syncFromGoogleCalendar();   // re-renders once the calendar answers
   </script>
 
   <style>
