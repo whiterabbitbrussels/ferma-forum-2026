@@ -609,7 +609,7 @@
     <div class="topbar">
       <div class="crumb" id="crumb">Production Overview</div>
       <div class="view-title" id="viewTitle"><span class="view-bar" style="background: var(--orange)"></span>Forum 2026</div>
-      <div class="view-desc">Hours, budget & approvals — approved deliverables + new production pending approval</div>
+      <div class="view-desc">Hours, budget & invoicing — First Estimation deliverables + New Production</div>
       <input id="search" type="text" placeholder="Search tasks…">
     </div>
 
@@ -904,7 +904,7 @@
         amountRemaining: 1360.00,
         status: "pending",
         reference: "",
-        ferma: "4h from Save the Date Flyer · 12h to approve",
+        ferma: "4h from Save the Date Flyer · 12h new budget",
         section: "new-realloc"
       },
       {
@@ -918,7 +918,7 @@
         amountRemaining: 2380.00,
         status: "pending",
         reference: "",
-        ferma: "8h from Leaflet · 20h to approve",
+        ferma: "8h from Leaflet · 20h new budget",
         section: "new-realloc"
       },
       {
@@ -932,7 +932,7 @@
         amountRemaining: 680.00,
         status: "pending",
         reference: "",
-        ferma: "2h from PPT Template · 6h to approve",
+        ferma: "2h from PPT Template · 6h new budget",
         section: "new-realloc"
       },
       {
@@ -1313,7 +1313,7 @@
       return `
         <div class="stats">
           <div class="stat-box">
-            <div class="stat-label">Approved Budget</div>
+            <div class="stat-label">First Estimation</div>
             <div class="stat-value">${approvedBudget}h</div>
             <div class="stat-desc">Original scope (${approvedInvoiced}h invoiced)</div>
           </div>
@@ -1325,10 +1325,10 @@
           <div class="stat-box">
             <div class="stat-label">New Production</div>
             <div class="stat-value">${newReallocBudget}h</div>
-            <div class="stat-desc">${reallocatedHours}h reallocated + ${pmEarmarkedHours}h PM earmarked + ${newBudgetHours}h to approve</div>
+            <div class="stat-desc">${reallocatedHours}h reallocated + ${pmEarmarkedHours}h PM earmarked + ${newBudgetHours}h new budget</div>
           </div>
           <div class="stat-box">
-            <div class="stat-label">New Budget to Approve</div>
+            <div class="stat-label">New Budget</div>
             <div class="stat-value">€${Math.round(newBudgetAmount + overAmount).toLocaleString('it-IT')}</div>
             <div class="stat-desc">${newBudgetHours}h @ €85/h not covered by reallocation${overAmount > 0 ? ` <span style="color: var(--c-over);">+ €${Math.round(overAmount).toLocaleString('it-IT')} for hours logged beyond budget (billed at task rate)</span>` : ''}</div>
           </div>
@@ -1340,7 +1340,7 @@
           <div class="stat-box">
             <div class="stat-label">Total Project Value</div>
             <div class="stat-value">€${Math.round(totalAmountInvoiced + originalPending + newBudgetAmount + overAmount).toLocaleString('it-IT')}</div>
-            <div class="stat-desc">€${totalAmountInvoiced.toLocaleString('it-IT')} invoiced • €${Math.round(originalPending).toLocaleString('it-IT')} pending (approved) • €${Math.round(newBudgetAmount).toLocaleString('it-IT')} to approve${overAmount > 0 ? ` • €${Math.round(overAmount).toLocaleString('it-IT')} beyond budget` : ''}</div>
+            <div class="stat-desc">€${totalAmountInvoiced.toLocaleString('it-IT')} invoiced • €${Math.round(originalPending).toLocaleString('it-IT')} pending (First Estimation) • €${Math.round(newBudgetAmount).toLocaleString('it-IT')} new budget${overAmount > 0 ? ` • €${Math.round(overAmount).toLocaleString('it-IT')} beyond budget` : ''}</div>
           </div>
         </div>
       `;
@@ -1372,8 +1372,8 @@
 
       // Group by section
       const sections = [
-        { key: "new-realloc", title: "New Production", desc: "34h reallocated from First Estimation + 25h PM earmarked for coordination — the remaining 38h require approval (€3.230). Calendar hours logged up to " + fmtEU(INVOICE_CUTOFF) + " are settled (invoiced & paid); anything later shows as tracked." },
-        { key: "approved", title: "First Estimation", desc: "Already budgeted & approved deliverables" }
+        { key: "new-realloc", title: "New Production", desc: "34h reallocated from First Estimation + 25h PM earmarked for coordination — the remaining 38h are new budget (€3.230). Calendar hours logged up to " + fmtEU(INVOICE_CUTOFF) + " are settled (invoiced & paid); anything later shows as tracked." },
+        { key: "approved", title: "First Estimation", desc: "Original scope — budgeted deliverables" }
       ];
 
       sections.forEach(section => {
