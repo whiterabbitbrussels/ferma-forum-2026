@@ -948,6 +948,23 @@
         reference: "",
         ferma: "Covered by the 25h of PM remaining — no extra cost",
         section: "new-realloc"
+      },
+      {
+        // Catch-all bucket: calendar work with no dedicated deliverable
+        // (stage design, badges, misc. materials). No budget of its own —
+        // every hour logged here is billed at €85/h.
+        id: 25,
+        name: "Materials (misc. onsite & comms items)",
+        budgetHours: 0,
+        invoicedHours: 0,
+        remainingHours: 0,
+        hourlyRate: 85.00,
+        amountInvoiced: 0.00,
+        amountRemaining: 0.00,
+        status: "pending",
+        reference: "",
+        ferma: "Catch-all for work without a specific deliverable — billed as logged",
+        section: "new-realloc"
       }
     ];
 
@@ -1008,10 +1025,28 @@
       'banners entrance': 17,
       'banners design': 17,
       // Registration Desk
-      'registration desk': 19
-      // Not mapped on purpose (no matching deliverable — assign by hand):
-      //   'stage design', 'badge european risk forum logo modified'
+      'registration desk': 19,
+      // Materials (catch-all) — also the automatic fallback, see MATERIALS_TASK_ID
+      'stage design': 25,
+      'badge european risk forum logo modified': 25
     };
+
+    // Keyword rules for free-text titles the exact matcher misses
+    // ("Maps modifications", "Harbour switch sides", "Ale catch up"…).
+    // First matching rule wins, so order = priority. Exact keys above and the
+    // dropdown always take precedence over these.
+    const KEYWORD_RULES = [
+      [/harbour/, 22],                                   // AI HARBOUR Design
+      [/\bmaps?\b|mappa/, 20],                           // General Map - 2nd & 3rd Floors
+      [/programme/, 21],                                 // Event Programme
+      [/banner/, 17],                                    // Approx. 20 Directional Banners
+      [/registration|reception/, 19],                    // Registration Desk
+      [/catch up|meeting|feedback|presentation|martamaria|\bemails?\b/, 24]  // PM (Coordination)
+    ];
+
+    // Any calendar entry that matches no deliverable lands here instead of
+    // being left uncounted. "— not counted —" in the dropdown still wins.
+    const MATERIALS_TASK_ID = 25;
 
     const $ = s => document.querySelector(s);
     const statusOf = k => STATUSES.find(s => s.key === k);
@@ -1055,6 +1090,11 @@
     // Hours are summed from calendar durations, so keep one decimal to avoid
     // 3.9999999h showing up in the table.
     const round1 = n => Math.round(n * 10) / 10;
+
+    // Hours logged beyond a line's budget are billed to the client at the
+    // line's hourly rate (agreed 2026-09-14). `consumed` = invoiced + calendar.
+    const overHoursOf = (t, consumed) => Math.max(0, round1(consumed - t.budgetHours));
+    const overAmountOf = (t, consumed) => Math.round(overHoursOf(t, consumed) * t.hourlyRate * 100) / 100;
 
     // Calendar dates arrive as ISO "yyyy-MM-dd"; show them European style.
     const fmtEU = iso => {
@@ -1167,6 +1207,15 @@
           }
         }
 
+        const explicitlyNotCounted = Object.prototype.hasOwnProperty.call(overrides, normTitle) && overrides[normTitle] == null;
+
+        // Still nothing → keyword rules, then the Materials bucket.
+        if (matchId == null && !explicitlyNotCounted) {
+          const rule = KEYWORD_RULES.find(([re, id]) => re.test(normTitle) && isTrackable(id));
+          if (rule) matchId = rule[1];
+          else if (isTrackable(MATERIALS_TASK_ID)) matchId = MATERIALS_TASK_ID;
+        }
+
         if (matchId == null) {
           unmatched.push(entry);
         } else {
@@ -1255,6 +1304,12 @@
 
       const totalAmountInvoiced = tasks.reduce((s, t) => s + t.amountInvoiced, 0);
 
+      // Hours logged beyond budget on New Production lines — billed at task rate
+      const overAmount = newRealloc.reduce((s, t) => {
+        const consumed = t.invoicedHours + (frozenByTask[t.id] || 0) + (trackedByTask[t.id] || 0);
+        return s + overAmountOf(t, consumed);
+      }, 0);
+
       return `
         <div class="stats">
           <div class="stat-box">
@@ -1274,8 +1329,8 @@
           </div>
           <div class="stat-box">
             <div class="stat-label">New Budget to Approve</div>
-            <div class="stat-value">€${Math.round(newBudgetAmount).toLocaleString('it-IT')}</div>
-            <div class="stat-desc">${newBudgetHours}h @ €85/h not covered by reallocation</div>
+            <div class="stat-value">€${Math.round(newBudgetAmount + overAmount).toLocaleString('it-IT')}</div>
+            <div class="stat-desc">${newBudgetHours}h @ €85/h not covered by reallocation${overAmount > 0 ? ` <span style="color: var(--c-over);">+ €${Math.round(overAmount).toLocaleString('it-IT')} for hours logged beyond budget (billed at task rate)</span>` : ''}</div>
           </div>
           <div class="stat-box">
             <div class="stat-label">Tracked, Not Invoiced</div>
@@ -1284,8 +1339,8 @@
           </div>
           <div class="stat-box">
             <div class="stat-label">Total Project Value</div>
-            <div class="stat-value">€${Math.round(totalAmountInvoiced + originalPending + newBudgetAmount).toLocaleString('it-IT')}</div>
-            <div class="stat-desc">€${totalAmountInvoiced.toLocaleString('it-IT')} invoiced • €${Math.round(originalPending).toLocaleString('it-IT')} pending (approved) • €${Math.round(newBudgetAmount).toLocaleString('it-IT')} to approve</div>
+            <div class="stat-value">€${Math.round(totalAmountInvoiced + originalPending + newBudgetAmount + overAmount).toLocaleString('it-IT')}</div>
+            <div class="stat-desc">€${totalAmountInvoiced.toLocaleString('it-IT')} invoiced • €${Math.round(originalPending).toLocaleString('it-IT')} pending (approved) • €${Math.round(newBudgetAmount).toLocaleString('it-IT')} to approve${overAmount > 0 ? ` • €${Math.round(overAmount).toLocaleString('it-IT')} beyond budget` : ''}</div>
           </div>
         </div>
       `;
@@ -1359,6 +1414,9 @@
           const invoicedHours = t.invoicedHours + frozen;
           const consumed = invoicedHours + tracked;
           const remaining = round1(t.budgetHours - consumed);
+          const overHours = overHoursOf(t, consumed);
+          const overAmount = overAmountOf(t, consumed);  // billed to the client
+          const noBudget = t.budgetHours === 0;          // catch-all bucket
 
           const invoicedPercent = t.budgetHours > 0 ? (invoicedHours / t.budgetHours) * 100 : 0;
           const trackedPercent = t.budgetHours > 0 ? (tracked / t.budgetHours) * 100 : 0;
@@ -1380,8 +1438,8 @@
               ? '<span class="hours-tracked" title="Logged in Google Calendar from July 22 onwards, not yet invoiced">◷ ' + round1(tracked) + 'h tracked</span>'
               : '') +
             '<span class="hours-remaining' + (remaining < 0 ? ' over' : '') + '">' +
-            (remaining >= 0 ? '✓ ' : '✗ ') + Math.abs(remaining) + 'h ' +
-            (remaining >= 0 ? 'left' : 'over') +
+            (remaining >= 0 ? '✓ ' : (noBudget ? '' : '✗ ')) + Math.abs(remaining) + 'h ' +
+            (remaining >= 0 ? 'left' : (noBudget ? 'logged' : 'over')) +
             '</span>' +
             '</div>' +
             '<div class="hours-progress" title="' + round1(invoicedHours) + 'h invoiced' + (frozen > 0 ? ' (incl. ' + round1(frozen) + 'h from calendar up to ' + fmtEU(INVOICE_CUTOFF) + ')' : '') + (tracked > 0 ? ' + ' + round1(tracked) + 'h tracked' : '') + ' of ' + t.budgetHours + 'h">' +
@@ -1394,6 +1452,7 @@
             '<td>' +
             '<div><span class="amount-invoiced">€' + t.amountInvoiced.toLocaleString('it-IT') + '</span></div>' +
             (t.amountRemaining > 0 ? '<div><span class="amount-remaining">€' + t.amountRemaining.toLocaleString('it-IT') + '</span></div>' : '') +
+            (overAmount > 0 ? '<div><span style="color: var(--c-over); font-weight: 600;" title="' + overHours + 'h ' + (noBudget ? 'logged' : 'beyond budget') + ' × €' + t.hourlyRate + '/h — billed to the client">+€' + overAmount.toLocaleString('it-IT') + (noBudget ? ' billed' : ' beyond budget') + '</span></div>' : '') +
             '</td>' +
             '<td><span class="status-badge ' + t.status + '">' + status.emoji + ' ' + status.label.split(' ')[1] + '</span></td>' +
             '<td><span class="ferma-cell" data-task-id="' + t.id + '" style="font-size: 11px; color: var(--muted); cursor: pointer; padding: 4px 8px; border-radius: 4px; display: inline-block; min-width: 160px; white-space: normal;" title="Double-click to edit">' + (t.ferma || '') + '</span></td>' +
@@ -1405,7 +1464,9 @@
         const totalInvoiced = sectionTasks.reduce((s, t) => s + t.invoicedHours, 0) + totalFrozen;
         const totalTracked = sectionTasks.reduce((s, t) => s + (trackedByTask[t.id] || 0), 0);
         const totalBudget = sectionTasks.reduce((s, t) => s + t.budgetHours, 0);
-        const totalAmount = sectionTasks.reduce((s, t) => s + t.amountInvoiced + t.amountRemaining, 0);
+        const totalOverAmount = sectionTasks.reduce((s, t) =>
+          s + overAmountOf(t, t.invoicedHours + (frozenByTask[t.id] || 0) + (trackedByTask[t.id] || 0)), 0);
+        const totalAmount = sectionTasks.reduce((s, t) => s + t.amountInvoiced + t.amountRemaining, 0) + totalOverAmount;
 
         html += '<tr style="background: var(--panel-2); font-weight: 600; border-top: 2px solid var(--line);">' +
           '<td style="color: var(--orange);">TOTAL</td>' +
@@ -1414,7 +1475,9 @@
           (totalTracked > 0 ? '<span class="hours-tracked" style="display: block; font-weight: 500;">incl. ' + round1(totalTracked) + 'h tracked</span>' : '') +
           '</td>' +
           '<td></td>' +
-          '<td style="color: var(--text);">€' + Math.round(totalAmount) + '</td>' +
+          '<td style="color: var(--text);">€' + Math.round(totalAmount) +
+          (totalOverAmount > 0 ? '<span style="display: block; font-size: 11px; font-weight: 500; color: var(--c-over);">incl. €' + Math.round(totalOverAmount) + ' beyond budget</span>' : '') +
+          '</td>' +
           '<td></td>' +
           '<td></td>' +
           '</tr>';
