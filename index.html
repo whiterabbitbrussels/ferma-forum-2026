@@ -976,12 +976,14 @@
     // First Estimation shut every time a note or dropdown changes.
     const openSections = { "new-realloc": true, "approved": false };
 
-    // ── Invoice cut-off ("punto zero") ─────────────────────────────────
-    // Calendar hours logged ON OR BEFORE this date are settled: they count as
-    // INVOICED & PAID on their task (orange segment). Anything logged after it
-    // is "tracked, not invoiced" (blue) and the count restarts from zero.
-    // Move the date forward at the next invoice.
-    const INVOICE_CUTOFF = '2026-09-02';   // ISO yyyy-mm-dd, inclusive — last invoice covers work up to and including this day
+    // ── Invoiced calendar hours ("punto zero") ─────────────────────────
+    // New Production hours already invoiced & paid so far. They are settled
+    // against the calendar in date order: the first PAID_CALENDAR_HOURS logged
+    // count as INVOICED & PAID on their task (orange); everything after is
+    // "tracked, not invoiced" (blue) → to be invoiced. Raise this figure at the
+    // next invoice. (2026-09-14: 41.7h paid, incl. the 37h migrated from the
+    // First Estimation pot.)
+    const PAID_CALENDAR_HOURS = 41.7;
 
     // Calendar title → task id, baked in so every viewer (client included)
     // sees the same allocation. Keys are normalizeName(title). The dropdown
@@ -1220,13 +1222,28 @@
           unmatched.push(entry);
         } else {
           matchOf[i] = matchId;
-          const bucket = entry.date && entry.date <= INVOICE_CUTOFF ? frozenByTask : byTask;
-          bucket[matchId] = (bucket[matchId] || 0) + hours;
           if (entry.date) (datesByTask[matchId] = datesByTask[matchId] || []).push(entry.date);
         }
       });
 
-      return { byTask, frozenByTask, datesByTask, matchOf, unmatched };
+      // Settle the first PAID_CALENDAR_HOURS in date order: those hours are
+      // invoiced & paid; whatever is left on each entry is still to be
+      // invoiced. An entry can straddle the line (partly paid).
+      const paidOf = {};   // entry index -> hours of that entry already paid
+      let quota = PAID_CALENDAR_HOURS;
+      Object.keys(matchOf).map(Number)
+        .sort((a, b) => String(timeEntries[a].date || '').localeCompare(String(timeEntries[b].date || '')) || a - b)
+        .forEach(i => {
+          const id = matchOf[i];
+          const h = Number(timeEntries[i].hours) || 0;
+          const paid = round1(Math.min(h, Math.max(0, quota)));
+          quota = round1(quota - paid);
+          paidOf[i] = paid;
+          if (paid > 0) frozenByTask[id] = round1((frozenByTask[id] || 0) + paid);
+          if (h - paid > 0) byTask[id] = round1((byTask[id] || 0) + (h - paid));
+        });
+
+      return { byTask, frozenByTask, datesByTask, matchOf, paidOf, unmatched };
     }
 
     function toast(m) {
@@ -1335,7 +1352,7 @@
           <div class="stat-box">
             <div class="stat-label">Tracked, Not Invoiced</div>
             <div class="stat-value" style="color: var(--c-tracked);">${round1(trackedTotal)}h</div>
-            <div class="stat-desc">Calendar hours logged after ${fmtEU(INVOICE_CUTOFF)}, not yet invoiced. <span style="color: var(--orange-soft);">${round1(frozenTotal)}h</span> logged up to ${fmtEU(INVOICE_CUTOFF)} are settled — invoiced &amp; paid — on their New Production lines. First Estimation is never touched.${unmatched.length ? ` <span style="color: var(--c-over);">${unmatched.length} entr${unmatched.length === 1 ? 'y' : 'ies'} unassigned — see timesheet.</span>` : ''}</div>
+            <div class="stat-desc">Calendar hours still to be invoiced. The first <span style="color: var(--orange-soft);">${round1(frozenTotal)}h</span> logged are settled — invoiced &amp; paid — on their New Production lines. First Estimation is never touched.${unmatched.length ? ` <span style="color: var(--c-over);">${unmatched.length} entr${unmatched.length === 1 ? 'y' : 'ies'} unassigned — see timesheet.</span>` : ''}</div>
           </div>
           <div class="stat-box">
             <div class="stat-label">Total Project Value</div>
@@ -1372,7 +1389,7 @@
 
       // Group by section
       const sections = [
-        { key: "new-realloc", title: "New Production", desc: "34h reallocated from First Estimation + 25h PM earmarked for coordination — the remaining 38h are new budget (€3.230). Calendar hours logged up to " + fmtEU(INVOICE_CUTOFF) + " are settled (invoiced & paid); anything later shows as tracked." },
+        { key: "new-realloc", title: "New Production", desc: "34h reallocated from First Estimation + 25h PM earmarked for coordination — the remaining 38h are new budget (€3.230). The first " + PAID_CALENDAR_HOURS + "h logged in the calendar are settled (invoiced & paid); everything after shows as tracked, to be invoiced." },
         { key: "approved", title: "First Estimation", desc: "Original scope — budgeted deliverables" }
       ];
 
@@ -1432,7 +1449,7 @@
             '<div class="hours-numbers">' +
             '<span class="hours-budget">' + round1(consumed) + '/' + t.budgetHours + 'h</span>' +
             (frozen > 0
-              ? '<span class="hours-invoiced" title="Calendar hours logged up to ' + fmtEU(INVOICE_CUTOFF) + ' — invoiced & paid">✓ ' + round1(invoicedHours) + 'h paid</span>'
+              ? '<span class="hours-invoiced" title="Calendar hours already invoiced & paid">✓ ' + round1(invoicedHours) + 'h paid</span>'
               : '') +
             (tracked > 0
               ? '<span class="hours-tracked" title="Logged in Google Calendar from July 22 onwards, not yet invoiced">◷ ' + round1(tracked) + 'h tracked</span>'
@@ -1442,7 +1459,7 @@
             (remaining >= 0 ? 'left' : (noBudget ? 'logged' : 'over')) +
             '</span>' +
             '</div>' +
-            '<div class="hours-progress" title="' + round1(invoicedHours) + 'h invoiced' + (frozen > 0 ? ' (incl. ' + round1(frozen) + 'h from calendar up to ' + fmtEU(INVOICE_CUTOFF) + ')' : '') + (tracked > 0 ? ' + ' + round1(tracked) + 'h tracked' : '') + ' of ' + t.budgetHours + 'h">' +
+            '<div class="hours-progress" title="' + round1(invoicedHours) + 'h invoiced' + (frozen > 0 ? ' (incl. ' + round1(frozen) + 'h from calendar, paid)' : '') + (tracked > 0 ? ' + ' + round1(tracked) + 'h tracked' : '') + ' of ' + t.budgetHours + 'h">' +
             '<div class="hours-progress-fill" style="width: ' + invoicedWidth + '%"></div>' +
             '<div class="hours-progress-tracked" style="width: ' + trackedWidth + '%"></div>' +
             '</div>' +
@@ -1604,7 +1621,7 @@
     const refreshTimesheet = syncFromGoogleCalendar;
 
     function renderTimesheet() {
-      const { matchOf, unmatched, byTask, frozenByTask } = computeTracked();
+      const { matchOf, paidOf, unmatched, byTask, frozenByTask } = computeTracked();
       const sum = o => Object.values(o).reduce((a, b) => a + b, 0);
       const paidTotal = round1(sum(frozenByTask));   // assigned & settled
       const openTotal = round1(sum(byTask));         // assigned, after cut-off
@@ -1612,7 +1629,7 @@
       // Keep the original index alongside each entry so we can look up which
       // task it was matched to, then sort by date (newest first).
       const sortedEntries = timeEntries
-        .map((entry, i) => ({ entry, matchedId: matchOf[i] }))
+        .map((entry, i) => ({ entry, matchedId: matchOf[i], paid: paidOf[i] || 0 }))
         .sort((a, b) => new Date(b.entry.date) - new Date(a.entry.date));
 
       const totalAllHours = round1(
@@ -1625,7 +1642,7 @@
       html += '<button id="refreshTimesheet" style="padding: 8px 14px; background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;">⟳ Refresh</button>';
       html += '<button id="copyAssignments" title="Copy this browser\'s entry → task assignments as JSON, to bake them into the dashboard" style="padding: 8px 14px; background: var(--panel-2); color: var(--text); border: 1px solid var(--line); border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; margin-left: auto;">⧉ Copy assignments</button>';
       html += '</div>';
-      html += '<p style="font-size: 12px; color: var(--muted); margin-bottom: 14px;"><span style="color: var(--c-paid);">✓</span> = settled: logged up to <strong>' + fmtEU(INVOICE_CUTOFF) + '</strong>, invoiced &amp; paid. Later entries count as tracked, not yet invoiced.</p>';
+      html += '<p style="font-size: 12px; color: var(--muted); margin-bottom: 14px;"><span style="color: var(--c-paid);">✓</span> = settled: within the first <strong>' + PAID_CALENDAR_HOURS + 'h</strong> logged, invoiced &amp; paid (<span style="color: var(--c-paid);">◐</span> = partly). Everything after is to be invoiced.</p>';
 
       if (timeEntries.length === 0) {
         html += '<p style="color: var(--muted); font-size: 12px;">No FRM time entries from July 22 onwards. Click "Sync from Google Calendar" to import events.</p>';
@@ -1643,9 +1660,11 @@
         // Show entries sorted by date (newest first). The target task is a
         // dropdown so a title the matcher could not place can be assigned by
         // hand — the choice sticks for every event with the same title.
-        sortedEntries.forEach(({ entry, matchedId }) => {
+        sortedEntries.forEach(({ entry, matchedId, paid }) => {
           const normTitle = normalizeName(entry.taskName);
-          const paid = !!entry.date && entry.date <= INVOICE_CUTOFF;
+          const h = Number(entry.hours) || 0;
+          const fully = h > 0 && paid >= h - 0.001;
+          const partly = paid > 0 && !fully;
           // New Production deliverables only — First Estimation is closed work.
           const options = ['<option value=""' + (matchedId == null ? ' selected' : '') + '>— not counted —</option>']
             .concat(trackableTasks().map(t =>
@@ -1661,16 +1680,16 @@
             (matchedId == null ? 'var(--c-over)' : 'var(--c-tracked)') + '; border: 1px solid ' +
             (matchedId == null ? 'var(--c-over)' : 'var(--line)') + ';">' + options + '</select>' +
             '</td>' +
-            '<td style="text-align: right; padding: 8px; white-space: nowrap; color: ' + (paid ? 'var(--c-paid)' : 'var(--orange)') + ';"' +
-            (paid ? ' title="Settled — invoiced & paid (cut-off ' + fmtEU(INVOICE_CUTOFF) + ')"' : '') + '>' +
-            entry.hours + 'h' + (paid ? ' ✓' : '') + '</td></tr>';
+            '<td style="text-align: right; padding: 8px; white-space: nowrap; color: ' + (fully ? 'var(--c-paid)' : 'var(--orange)') + ';"' +
+            (fully ? ' title="Settled — invoiced & paid"' : partly ? ' title="' + paid + 'h of ' + h + 'h invoiced & paid — the rest is to be invoiced"' : ' title="To be invoiced"') + '>' +
+            entry.hours + 'h' + (fully ? ' ✓' : partly ? ' <span style="color: var(--c-paid);">◐</span>' : '') + '</td></tr>';
         });
 
         // Show grand total, split by settled / open / not counted
         const notCounted = round1(totalAllHours - paidTotal - openTotal);
         html += '<tr style="background: var(--panel-2); font-weight: 600; border-top: 2px solid var(--line);"><td style="padding: 8px;"></td><td style="padding: 8px; color: var(--text);">TOTAL (From July 22 Onwards)</td><td style="padding: 8px;"></td><td style="text-align: right; padding: 8px; color: var(--orange);">' + totalAllHours + 'h</td></tr>';
         html += '<tr style="background: var(--panel-2); font-size: 11px;"><td style="padding: 4px 8px 10px;"></td><td style="padding: 4px 8px 10px; color: var(--muted);">' +
-          '<span style="color: var(--c-paid);">✓ ' + paidTotal + 'h settled (≤ ' + fmtEU(INVOICE_CUTOFF) + ')</span> · ' +
+          '<span style="color: var(--c-paid);">✓ ' + paidTotal + 'h settled — invoiced &amp; paid</span> · ' +
           '<span style="color: var(--c-tracked);">' + openTotal + 'h tracked, not invoiced</span>' +
           (notCounted > 0 ? ' · <span style="color: var(--c-over);">' + notCounted + 'h not assigned to any task</span>' : '') +
           '</td><td></td><td></td></tr>';

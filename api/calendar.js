@@ -10,18 +10,25 @@
 const APPS_SCRIPT_URL =
   'https://script.google.com/macros/s/AKfycbySMdu5iNFgJya0ix46e71vU0ywyPG7SxR7ZvVbCtFoYlPyRpVAstKOKI-hAwLTTBr9/exec';
 
+// Google occasionally answers a one-off HTML 404/5xx; one retry clears it.
+async function fetchScript() {
+  let lastErr;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const r = await fetch(APPS_SCRIPT_URL, { redirect: 'follow' });
+    const text = await r.text();
+    try {
+      return JSON.parse(text);
+    } catch (_) {
+      lastErr = new Error('Apps Script returned non-JSON (HTTP ' + r.status + '): ' + text.slice(0, 120));
+    }
+  }
+  throw lastErr;
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   try {
-    const r = await fetch(APPS_SCRIPT_URL, { redirect: 'follow' });
-    const text = await r.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (_) {
-      throw new Error('Apps Script returned non-JSON (HTTP ' + r.status + '): ' + text.slice(0, 120));
-    }
-    res.status(200).json(data);
+    res.status(200).json(await fetchScript());
   } catch (e) {
     res.status(502).json({ success: false, error: String((e && e.message) || e) });
   }
