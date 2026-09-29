@@ -1095,8 +1095,9 @@
 
     // Hours logged beyond a line's budget are billed to the client at the
     // line's hourly rate (agreed 2026-09-14). `consumed` = invoiced + calendar.
-    const overHoursOf = (t, consumed) => Math.max(0, round1(consumed - t.budgetHours));
-    const overAmountOf = (t, consumed) => Math.round(overHoursOf(t, consumed) * t.hourlyRate * 100) / 100;
+    // Hours already invoiced & paid past the budget are not billed twice.
+    const overHoursOf = (t, consumed, paid = 0) => Math.max(0, round1(consumed - Math.max(t.budgetHours, paid)));
+    const overAmountOf = (t, consumed, paid = 0) => Math.round(overHoursOf(t, consumed, paid) * t.hourlyRate * 100) / 100;
 
     // Calendar dates arrive as ISO "yyyy-MM-dd"; show them European style.
     const fmtEU = iso => {
@@ -1324,7 +1325,7 @@
       // Hours logged beyond budget on New Production lines — billed at task rate
       const overAmount = newRealloc.reduce((s, t) => {
         const consumed = t.invoicedHours + (frozenByTask[t.id] || 0) + (trackedByTask[t.id] || 0);
-        return s + overAmountOf(t, consumed);
+        return s + overAmountOf(t, consumed, t.invoicedHours + (frozenByTask[t.id] || 0));
       }, 0);
 
       return `
@@ -1431,8 +1432,8 @@
           const invoicedHours = t.invoicedHours + frozen;
           const consumed = invoicedHours + tracked;
           const remaining = round1(t.budgetHours - consumed);
-          const overHours = overHoursOf(t, consumed);
-          const overAmount = overAmountOf(t, consumed);  // billed to the client
+          const overHours = overHoursOf(t, consumed, invoicedHours);
+          const overAmount = overAmountOf(t, consumed, invoicedHours);  // billed to the client
           const noBudget = t.budgetHours === 0;          // catch-all bucket
 
           const invoicedPercent = t.budgetHours > 0 ? (invoicedHours / t.budgetHours) * 100 : 0;
@@ -1482,7 +1483,7 @@
         const totalTracked = sectionTasks.reduce((s, t) => s + (trackedByTask[t.id] || 0), 0);
         const totalBudget = sectionTasks.reduce((s, t) => s + t.budgetHours, 0);
         const totalOverAmount = sectionTasks.reduce((s, t) =>
-          s + overAmountOf(t, t.invoicedHours + (frozenByTask[t.id] || 0) + (trackedByTask[t.id] || 0)), 0);
+          s + overAmountOf(t, t.invoicedHours + (frozenByTask[t.id] || 0) + (trackedByTask[t.id] || 0), t.invoicedHours + (frozenByTask[t.id] || 0)), 0);
         const totalAmount = sectionTasks.reduce((s, t) => s + t.amountInvoiced + t.amountRemaining, 0) + totalOverAmount;
 
         html += '<tr style="background: var(--panel-2); font-weight: 600; border-top: 2px solid var(--line);">' +
