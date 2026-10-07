@@ -1008,9 +1008,10 @@
     // against the calendar in date order: the first PAID_CALENDAR_HOURS logged
     // count as INVOICED & PAID on their task (orange); everything after is
     // "tracked, not invoiced" (blue) → to be invoiced. Raise this figure at the
-    // next invoice. (2026-09-14: 41.7h paid, incl. the 37h migrated from the
-    // First Estimation pot.)
-    const PAID_CALENDAR_HOURS = 41.7;
+    // next invoice. It must match the hours the invoice actually carries:
+    // WR206 bills 38.5h, so 38.5 it is — it stood at 41.7 for a while, which
+    // credited 3.2h that were never invoiced.
+    const PAID_CALENDAR_HOURS = 38.5;
     // Invoice those settled calendar hours were billed on.
     const PAID_CALENDAR_INVOICE = 'WR206';
 
