@@ -1011,6 +1011,8 @@
     // next invoice. (2026-09-14: 41.7h paid, incl. the 37h migrated from the
     // First Estimation pot.)
     const PAID_CALENDAR_HOURS = 41.7;
+    // Invoice those settled calendar hours were billed on.
+    const PAID_CALENDAR_INVOICE = 'WR206';
 
     // Calendar title → task id, baked in so every viewer (client included)
     // sees the same allocation. Keys are normalizeName(title). The dropdown
@@ -1417,7 +1419,7 @@
 
       // Group by section
       const sections = [
-        { key: "new-realloc", title: "New Production", desc: "34h reallocated from First Estimation + 25h PM earmarked for coordination — the remaining 38h are new budget (€3.230). The first " + PAID_CALENDAR_HOURS + "h logged in the calendar are settled (invoiced & paid); everything after shows as tracked, to be invoiced." },
+        { key: "new-realloc", title: "New Production", desc: "34h reallocated from First Estimation + 25h PM earmarked for coordination — the remaining 38h are new budget (€3.230). The first " + PAID_CALENDAR_HOURS + "h logged in the calendar are settled (invoiced & paid on " + PAID_CALENDAR_INVOICE + "); everything after shows as tracked, to be invoiced." },
         { key: "approved", title: "First Estimation", desc: "Original scope — budgeted deliverables" }
       ];
 
@@ -1477,7 +1479,7 @@
             '<div class="hours-numbers">' +
             '<span class="hours-budget">' + round1(consumed) + '/' + t.budgetHours + 'h</span>' +
             (frozen > 0
-              ? '<span class="hours-invoiced" title="Calendar hours already invoiced & paid">✓ ' + round1(invoicedHours) + 'h paid</span>'
+              ? '<span class="hours-invoiced" title="Calendar hours already invoiced &amp; paid on invoice ' + PAID_CALENDAR_INVOICE + '">✓ ' + round1(invoicedHours) + 'h paid</span>'
               : '') +
             (tracked > 0
               ? '<span class="hours-tracked" title="Logged in Google Calendar from July 22 onwards, not yet invoiced">◷ ' + round1(tracked) + 'h tracked</span>'
@@ -1542,7 +1544,12 @@
         html += '<tr style="background: var(--panel-2); font-weight: 600; border-top: 2px solid var(--line);">' +
           '<td style="color: var(--orange);">TOTAL</td>' +
           '<td>' +
-          (paidHours > 0 ? '<span class="hours-invoiced" style="display: block;">✓ ' + round1(paidHours) + 'h paid</span>' : '') +
+          // Only the calendar-settled hours carry a single invoice reference;
+          // First Estimation lines were billed across several, each named in
+          // its own note.
+          (paidHours > 0 ? '<span class="hours-invoiced" style="display: block;">✓ ' + round1(paidHours) + 'h paid' +
+            (totalFrozen > 0 ? ' <span style="font-weight: 500;">(invoice ' + PAID_CALENDAR_INVOICE + ')</span>' : '') +
+            '</span>' : '') +
           (toInvoiceHours > 0 ? '<span class="hours-tracked" style="display: block; font-size: 12px;">' + round1(toInvoiceHours) + 'h to invoice</span>' : '') +
           '</td>' +
           '<td></td>' +
