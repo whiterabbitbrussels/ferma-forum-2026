@@ -519,6 +519,19 @@
       background: rgba(239, 68, 68, 0.2);
     }
 
+    /* Deliverable dropped — its budget was reallocated, nothing was produced */
+    .status-badge.cancelled {
+      background: rgba(154, 145, 138, 0.1);
+      color: var(--muted);
+      border-color: #3a3531;
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+
+    .status-badge.cancelled:hover {
+      background: rgba(154, 145, 138, 0.2);
+    }
+
     .status-badge.over {
       background: rgba(236, 72, 153, 0.1);
       color: var(--c-over);
@@ -636,6 +649,7 @@
       { key: "paid", label: "✅ Paid", color: "#22c55e", emoji: "✅" },
       { key: "pending", label: "🟡 Pending", color: "#f59e0b", emoji: "🟡" },
       { key: "not-started", label: "⏳ Not Started", color: "#ef4444", emoji: "⏳" },
+      { key: "cancelled", label: "⊘ Cancelled", color: "#9a918a", emoji: "⊘" },
       { key: "over", label: "⚠️ Over Budget", color: "#ec4899", emoji: "⚠️" }
     ];
 
@@ -789,7 +803,7 @@
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 170.00,
-        status: "pending",
+        status: "cancelled",
         reference: "",
         ferma: "2h from Design Onsite",
         section: "new-realloc"
@@ -803,7 +817,7 @@
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 255.00,
-        status: "pending",
+        status: "cancelled",
         reference: "",
         ferma: "3h from Design Onsite",
         section: "new-realloc"
@@ -817,7 +831,7 @@
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 170.00,
-        status: "pending",
+        status: "cancelled",
         reference: "",
         ferma: "2h from Design Onsite",
         section: "new-realloc"
@@ -831,7 +845,7 @@
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 255.00,
-        status: "pending",
+        status: "cancelled",
         reference: "",
         ferma: "3h from Design Onsite",
         section: "new-realloc"
@@ -845,7 +859,7 @@
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 127.50,
-        status: "pending",
+        status: "cancelled",
         reference: "",
         ferma: "1,5h from Design Onsite",
         section: "new-realloc"
@@ -859,7 +873,7 @@
         hourlyRate: 85.00,
         amountInvoiced: 0.00,
         amountRemaining: 170.00,
-        status: "pending",
+        status: "cancelled",
         reference: "",
         ferma: "2h from Design Onsite",
         section: "new-realloc"
@@ -1492,7 +1506,9 @@
             (t.amountRemaining > 0 ? '<div><span class="amount-remaining">€' + t.amountRemaining.toLocaleString('it-IT') + '</span></div>' : '') +
             (overAmount > 0 ? '<div><span style="color: var(--c-over); font-weight: 600;" title="' + overHours + 'h ' + (noBudget ? 'logged' : 'over budget') + ' × €' + t.hourlyRate + '/h">+€' + overAmount.toLocaleString('it-IT') + ' to be invoiced</span></div>' : '') +
             '</td>' +
-            '<td><span class="status-badge ' + t.status + '">' + status.emoji + ' ' + status.label.split(' ')[1] + '</span></td>' +
+            // slice(1), not [1]: a two-word label like "Not Started" was
+            // being cut down to "Not" on the badge.
+            '<td><span class="status-badge ' + t.status + '">' + status.emoji + ' ' + status.label.split(' ').slice(1).join(' ') + '</span></td>' +
             '<td><span class="ferma-cell" data-task-id="' + t.id + '" style="font-size: 11px; color: var(--muted); cursor: pointer; padding: 4px 8px; border-radius: 4px; display: inline-block; min-width: 160px; white-space: normal;" title="Double-click to edit">' + (t.ferma || '') + '</span></td>' +
             '</tr>';
         });
