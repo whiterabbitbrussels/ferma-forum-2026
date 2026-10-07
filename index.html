@@ -460,6 +460,19 @@
       transition: width 0.3s ease;
     }
 
+    /* Catch-all lines carry no budget, so every hour on them sits outside one */
+    .hours-progress-nobudget {
+      height: 100%;
+      background: repeating-linear-gradient(
+        45deg,
+        var(--c-over) 0px,
+        var(--c-over) 4px,
+        rgba(0, 0, 0, 0.25) 4px,
+        rgba(0, 0, 0, 0.25) 8px
+      );
+      transition: width 0.3s ease;
+    }
+
     .status-badge {
       display: inline-flex;
       align-items: center;
@@ -1460,9 +1473,16 @@
             (remaining >= 0 ? 'left' : (noBudget ? 'logged' : 'over')) +
             '</span>' +
             '</div>' +
-            '<div class="hours-progress" title="' + round1(invoicedHours) + 'h invoiced' + (frozen > 0 ? ' (incl. ' + round1(frozen) + 'h from calendar, paid)' : '') + (tracked > 0 ? ' + ' + round1(tracked) + 'h tracked' : '') + ' of ' + t.budgetHours + 'h">' +
-            '<div class="hours-progress-fill" style="width: ' + invoicedWidth + '%"></div>' +
-            '<div class="hours-progress-tracked" style="width: ' + trackedWidth + '%"></div>' +
+            '<div class="hours-progress" title="' + (noBudget
+              ? round1(consumed) + 'h logged with no budget on this line'
+              : round1(invoicedHours) + 'h invoiced' + (frozen > 0 ? ' (incl. ' + round1(frozen) + 'h from calendar, paid)' : '') + (tracked > 0 ? ' + ' + round1(tracked) + 'h tracked' : '') + ' of ' + t.budgetHours + 'h') + '">' +
+            // A no-budget line has nothing to fill against, so the percentages
+            // would both be 0 and the bar would read as "nothing done". Fill it
+            // instead: every hour on it is outside any approved budget.
+            (noBudget && consumed > 0
+              ? '<div class="hours-progress-nobudget" style="width: 100%"></div>'
+              : '<div class="hours-progress-fill" style="width: ' + invoicedWidth + '%"></div>' +
+                '<div class="hours-progress-tracked" style="width: ' + trackedWidth + '%"></div>') +
             '</div>' +
             '</div>' +
             '</td>' +
@@ -1490,10 +1510,16 @@
         const toInvoiceHours = sectionTasks.reduce((s, t) =>
           s + (t.amountInvoiced > 0 ? 0 : t.invoicedHours), 0) + totalTracked;
 
-        const totalOverAmount = sectionTasks.reduce((s, t) =>
-          s + overAmountOf(t, t.invoicedHours + (frozenByTask[t.id] || 0) + (trackedByTask[t.id] || 0), t.invoicedHours + (frozenByTask[t.id] || 0)), 0);
         const paidAmount = sectionTasks.reduce((s, t) => s + t.amountInvoiced, 0);
-        const toInvoiceAmount = sectionTasks.reduce((s, t) => s + t.amountRemaining, 0) + totalOverAmount;
+
+        // Only work actually done counts here. Budget sitting on a line nobody
+        // has worked on yet — the reallocated fit-out items, Leaflet, the
+        // Flyer — is not something to invoice, so it stays out. Hours beyond
+        // budget are already inside these hours, so no separate overage.
+        const toInvoiceAmount = sectionTasks.reduce((s, t) => {
+          const hours = (t.amountInvoiced > 0 ? 0 : t.invoicedHours) + (trackedByTask[t.id] || 0);
+          return s + hours * t.hourlyRate;
+        }, 0);
 
         const eur = n => '€' + Math.round(n).toLocaleString('it-IT');
 
