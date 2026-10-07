@@ -1346,7 +1346,7 @@
             <div class="stat-desc">${reallocatedHours}h reallocated + ${pmEarmarkedHours}h PM earmarked + ${newBudgetHours}h new budget</div>
           </div>
           <div class="stat-box">
-            <div class="stat-label">New Budget</div>
+            <div class="stat-label">Production 2026</div>
             <div class="stat-value">€${Math.round(newBudgetAmount + overAmount).toLocaleString('it-IT')}</div>
             <div class="stat-desc">${newBudgetHours}h @ €85/h not covered by reallocation${overAmount > 0 ? ` <span style="color: var(--c-over);">+ €${Math.round(overAmount).toLocaleString('it-IT')} to be invoiced for extra hours logged (at task rate)</span>` : ''}</div>
           </div>
@@ -1477,24 +1477,36 @@
             '</tr>';
         });
 
-        // Add totals row
+        // Add totals row — split into "already paid" vs "still to invoice"
+        // rather than a combined figure, which read as a budget overrun.
+        // A line counts as paid only where money actually came in
+        // (amountInvoiced > 0); hours delivered but never billed, and calendar
+        // hours past the settled quota, both fall on the "to invoice" side.
         const totalFrozen = sectionTasks.reduce((s, t) => s + (frozenByTask[t.id] || 0), 0);
-        const totalInvoiced = sectionTasks.reduce((s, t) => s + t.invoicedHours, 0) + totalFrozen;
         const totalTracked = sectionTasks.reduce((s, t) => s + (trackedByTask[t.id] || 0), 0);
-        const totalBudget = sectionTasks.reduce((s, t) => s + t.budgetHours, 0);
+
+        const paidHours = sectionTasks.reduce((s, t) =>
+          s + (t.amountInvoiced > 0 ? t.invoicedHours : 0), 0) + totalFrozen;
+        const toInvoiceHours = sectionTasks.reduce((s, t) =>
+          s + (t.amountInvoiced > 0 ? 0 : t.invoicedHours), 0) + totalTracked;
+
         const totalOverAmount = sectionTasks.reduce((s, t) =>
           s + overAmountOf(t, t.invoicedHours + (frozenByTask[t.id] || 0) + (trackedByTask[t.id] || 0), t.invoicedHours + (frozenByTask[t.id] || 0)), 0);
-        const totalAmount = sectionTasks.reduce((s, t) => s + t.amountInvoiced + t.amountRemaining, 0) + totalOverAmount;
+        const paidAmount = sectionTasks.reduce((s, t) => s + t.amountInvoiced, 0);
+        const toInvoiceAmount = sectionTasks.reduce((s, t) => s + t.amountRemaining, 0) + totalOverAmount;
+
+        const eur = n => '€' + Math.round(n).toLocaleString('it-IT');
 
         html += '<tr style="background: var(--panel-2); font-weight: 600; border-top: 2px solid var(--line);">' +
           '<td style="color: var(--orange);">TOTAL</td>' +
-          '<td style="color: var(--orange);">' + round1(totalInvoiced + totalTracked) + '/' + totalBudget + 'h' +
-          (totalFrozen > 0 ? '<span class="hours-invoiced" style="display: block; font-weight: 500; font-size: 11px;">✓ ' + round1(totalFrozen) + 'h from calendar · paid</span>' : '') +
-          (totalTracked > 0 ? '<span class="hours-tracked" style="display: block; font-weight: 500;">incl. ' + round1(totalTracked) + 'h tracked</span>' : '') +
+          '<td>' +
+          (paidHours > 0 ? '<span class="hours-invoiced" style="display: block;">✓ ' + round1(paidHours) + 'h paid</span>' : '') +
+          (toInvoiceHours > 0 ? '<span class="hours-tracked" style="display: block; font-size: 12px;">' + round1(toInvoiceHours) + 'h to invoice</span>' : '') +
           '</td>' +
           '<td></td>' +
-          '<td style="color: var(--text);">€' + Math.round(totalAmount) +
-          (totalOverAmount > 0 ? '<span style="display: block; font-size: 11px; font-weight: 500; color: var(--c-over);">incl. €' + Math.round(totalOverAmount) + ' to be invoiced</span>' : '') +
+          '<td>' +
+          (paidAmount > 0 ? '<span class="amount-invoiced" style="display: block;">' + eur(paidAmount) + ' paid</span>' : '') +
+          (toInvoiceAmount > 0 ? '<span style="display: block; color: var(--c-over);">' + eur(toInvoiceAmount) + ' to invoice</span>' : '') +
           '</td>' +
           '<td></td>' +
           '<td></td>' +

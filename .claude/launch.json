@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ferma-dashboard",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4655", "-d", "/Users/albertomaccari/White_Rabbit/Office/WR-AI/08-Agentic/ferma-forum-2026"],
+      "port": 4655
+    }
+  ]
+}
